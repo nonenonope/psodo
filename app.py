@@ -175,3 +175,9 @@ if st.button("🚀 Uyarıcıları Üret ve Sentezle"):
         st.subheader("📋 Tekil Uyarıcı Listesi")
         for i, kelime in enumerate(kelimeler, 1):
             st.write(f"{i}. {kelime}")
+
+# CSV İndirme Butonu
+        import pandas as pd
+        df = pd.DataFrame({"Psödo-Sözcükler": kelimeler})
+        csv = df.to_csv(index=False).encode('utf-8')
+        st.download_button("📥 Uyarıcı Listesini CSV Olarak İndir", data=csv, file_name="uyarici_bataryasi.csv", mime="text/csv")
