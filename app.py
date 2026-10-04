@@ -10,11 +10,18 @@ INCE_UNLULER = ['e', 'i', 'ö', 'ü']
 UNSUZLER = ['b', 'c', 'ç', 'd', 'f', 'g', 'ğ', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 'ş', 't', 'v', 'y', 'z']
 SERT_UNSUZLER = ['p', 'ç', 't', 'k', 'f', 'h', 's', 'ş'] # Fıstıkçı Şahap
 
-def hece_uret(unlu_tipi):
+def hece_uret(unlu_tipi, onceki_unluyle_bitti_mi):
     unlu = random.choice(KALIN_UNLULER) if unlu_tipi == "kalin" else random.choice(INCE_UNLULER)
-    yapilar = ["CV", "CVC", "VC", "V"]
-    secilen_yapi = random.choices(yapilar, weights=[45, 40, 10, 5])[0]
     
+    if onceki_unluyle_bitti_mi:
+        # KURAL: Önceki hece sesliyle bittiyse, yeni hece KESİNLİKLE sessizle (C) başlamalı
+        yapilar = ["CV", "CVC"]
+        secilen_yapi = random.choices(yapilar, weights=[55, 45])[0]
+    else:
+        # KURAL: Önceki hece sessizle bittiyse tüm hece yapıları serbest
+        yapilar = ["CV", "CVC", "VC", "V"]
+        secilen_yapi = random.choices(yapilar, weights=[45, 40, 10, 5])[0]
+        
     if secilen_yapi == "V": return unlu
     elif secilen_yapi == "VC": return unlu + random.choice(UNSUZLER)
     elif secilen_yapi == "CV": return random.choice(UNSUZLER) + unlu
@@ -24,11 +31,20 @@ def kuralli_kelime_uret(min_hece, max_hece):
     hece_sayisi = random.randint(min_hece, max_hece)
     unlu_tipi = random.choice(["kalin", "ince"])
     kelime = ""
+    onceki_unluyle_bitti_mi = False # Kelimenin başında olduğumuz için sıfırlıyoruz
+    
     for i in range(hece_sayisi):
-        hece = hece_uret(unlu_tipi)
+        hece = hece_uret(unlu_tipi, onceki_unluyle_bitti_mi)
+        
+        # Kelime 'ğ' ile başlayamaz kuralı
         if i == 0 and hece.startswith("ğ"):
             hece = hece.replace("ğ", random.choice(["g", "k", "d"]), 1)
+            
         kelime += hece
+        
+        # Bir sonraki döngüye geçmeden önce, bu hecenin son harfinin ünlü olup olmadığını hafızaya alıyoruz
+        onceki_unluyle_bitti_mi = hece[-1] in (KALIN_UNLULER + INCE_UNLULER)
+        
     return kelime
 
 def morfolojik_ek_getir(kelime, ek_tipi):
