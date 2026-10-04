@@ -6,6 +6,15 @@ import streamlit as st
 from gtts import gTTS
 from pydub import AudioSegment
 
+# --- TÜRKÇE KARAKTER YÖNETİMİ (İ/I Sorununu çözen fonksiyonlar) ---
+def turkce_kucult(metin):
+    if not isinstance(metin, str): return metin
+    return metin.replace('İ', 'i').replace('I', 'ı').lower()
+
+def turkce_buyut(metin):
+    if not isinstance(metin, str): return metin
+    return metin.replace('i', 'İ').replace('ı', 'I').upper()
+
 # --- 1. DİLBİLİMSEL KURALLAR VE SES ENVANTERİ ---
 KALIN_UNLULER = ['a', 'ı', 'o', 'u']
 INCE_UNLULER = ['e', 'i', 'ö', 'ü']
@@ -97,9 +106,9 @@ def jabberwocky_cumlesi_uret(min_hece, max_hece):
     k2 = kuralli_kelime_uret(min_hece, max_hece)
     k3 = kuralli_kelime_uret(min_hece, max_hece)
     cerceveler = [
-        f"{k1.capitalize()} çok {k2} bir {morfolojik_ek_getir(k3, 'bildirme')}.",
-        f"{morfolojik_ek_getir(k1.capitalize(), 'cogul')} {morfolojik_ek_getir(k2, 'bulunma')} {morfolojik_ek_getir(k3, 'genis_zaman')}.",
-        f"{k1.capitalize()} {morfolojik_ek_getir(k2, 'belirtme')} {morfolojik_ek_getir(k3, 'gecmis_zaman')}."
+        f"{turkce_buyut(k1[:1]) + turkce_kucult(k1[1:])} çok {k2} bir {morfolojik_ek_getir(k3, 'bildirme')}.",
+        f"{morfolojik_ek_getir(turkce_buyut(k1[:1]) + turkce_kucult(k1[1:]), 'cogul')} {morfolojik_ek_getir(k2, 'bulunma')} {morfolojik_ek_getir(k3, 'genis_zaman')}.",
+        f"{turkce_buyut(k1[:1]) + turkce_kucult(k1[1:])} {morfolojik_ek_getir(k2, 'belirtme')} {morfolojik_ek_getir(k3, 'gecmis_zaman')}."
     ]
     return random.choice(cerceveler)
 
@@ -188,13 +197,12 @@ with sekme2:
         st.progress((mevcut_index) / len(st.session_state.batarya))
         st.subheader(f"Soru {mevcut_index + 1} / {len(st.session_state.batarya)}")
         
-        # --- FİKSASYON ARTISI (Fixation Cross) ---
+        # --- FİKSASYON ARTISI ---
         placeholder = st.empty()
         placeholder.markdown("<h1 style='text-align: center; font-size: 80px; margin: 40px 0;'>+</h1>", unsafe_allow_html=True)
-        time.sleep(0.5) # Yarım saniye ekranda kalır
-        placeholder.empty() # Artıyı ekrandan siler
+        time.sleep(0.5)
+        placeholder.empty()
         
-        # Seçilen moda göre uyarıcıyı ekrana bas
         mod = st.session_state.secilen_mod
         
         if mod in ["Sadece Ses", "Ses + Yazı (Birlikte)"]:
@@ -202,7 +210,9 @@ with sekme2:
             st.audio(ses_dosyasi, format="audio/mp3", autoplay=True)
             
         if mod in ["Sadece Yazı", "Ses + Yazı (Birlikte)"]:
-            st.markdown(f"<h1 style='text-align: center; font-size: 60px; margin: 40px 0;'>{aktif_kelime.upper()}</h1>", unsafe_allow_html=True)
+            # --- TÜRKÇE KURALLARINA UYGUN BÜYÜK HARF GÖSTERİMİ ---
+            gosterilecek_metin = turkce_buyut(aktif_kelime)
+            st.markdown(f"<h1 style='text-align: center; font-size: 60px; margin: 40px 0;'>{gosterilecek_metin}</h1>", unsafe_allow_html=True)
             
         if mod == "Sadece Ses":
             st.markdown(f"<h1 style='text-align: center; font-size: 60px; margin: 40px 0;'>🔊</h1>", unsafe_allow_html=True)
