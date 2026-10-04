@@ -168,7 +168,6 @@ with sekme2:
     if not st.session_state.deney_basladi and not st.session_state.deney_bitti:
         st.write("Lütfen deneyi hangi modalitede (duyusal kanalda) sunmak istediğinizi seçin:")
         
-        # Sunum Modu Seçici
         sunum_modu = st.radio("Uyarıcı Sunum Modu:", ["Sadece Ses", "Sadece Yazı", "Ses + Yazı (Birlikte)"])
         
         if st.button("▶️ Deneyi Başlat"):
@@ -188,6 +187,12 @@ with sekme2:
         aktif_kelime = st.session_state.batarya[mevcut_index]["kelime"]
         st.progress((mevcut_index) / len(st.session_state.batarya))
         st.subheader(f"Soru {mevcut_index + 1} / {len(st.session_state.batarya)}")
+        
+        # --- FİKSASYON ARTISI (Fixation Cross) ---
+        placeholder = st.empty()
+        placeholder.markdown("<h1 style='text-align: center; font-size: 80px; margin: 40px 0;'>+</h1>", unsafe_allow_html=True)
+        time.sleep(0.5) # Yarım saniye ekranda kalır
+        placeholder.empty() # Artıyı ekrandan siler
         
         # Seçilen moda göre uyarıcıyı ekrana bas
         mod = st.session_state.secilen_mod
@@ -216,7 +221,7 @@ with sekme2:
             st.session_state.sonuclar.append({
                 "Kelime": st.session_state.batarya[mevcut_index]["kelime"],
                 "Tip": "Gerçek" if dogru_cevap else "Psödo",
-                "Sunum Modu": st.session_state.secilen_mod, # Modu buraya logluyoruz
+                "Sunum Modu": st.session_state.secilen_mod,
                 "Cevap": "Gerçek" if verilen_cevap else "Psödo",
                 "Doğruluk": isabet,
                 "RT (ms)": round(rt, 2)
