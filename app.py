@@ -124,13 +124,14 @@ if 'batarya' not in st.session_state: st.session_state.batarya = []
 if 'mevcut_soru' not in st.session_state: st.session_state.mevcut_soru = 0
 if 'sonuclar' not in st.session_state: st.session_state.sonuclar = []
 if 'baslangic_zamani' not in st.session_state: st.session_state.baslangic_zamani = 0
+if 'secilen_mod' not in st.session_state: st.session_state.secilen_mod = "Sadece Ses"
 
 st.set_page_config(page_title="Psödo-Sözcük ve LDT Simülatörü", layout="wide")
 st.title("🧠 Klinik Psödo-Sözcük ve RT Deney Simülatörü")
 
 sekme1, sekme2 = st.tabs(["⚙️ Jeneratör & Bürünsel Sentez", "⏱️ Klinik Deney (LDT)"])
 
-# --- SEKME 1: ESKİ YAKLAŞIMIMIZ (JENERATÖR) ---
+# --- SEKME 1: JENERATÖR ---
 with sekme1:
     st.header("Uyarıcı Bataryası Üret")
     col1, col2 = st.columns(2)
@@ -160,14 +161,18 @@ with sekme1:
             csv = df.to_csv(index=False).encode('utf-8')
             st.download_button("📥 Listeyi CSV Olarak İndir", data=csv, file_name="uyarici_bataryasi.csv", mime="text/csv")
 
-# --- SEKME 2: YENİ KLİNİK DENEY ---
+# --- SEKME 2: KLİNİK DENEY ---
 with sekme2:
-    st.header("İşitsel Sözcüksel Karar Görevi (LDT)")
-    st.write("Katılımcıların gerçek ve sahte kelimelere karar verme hızlarını (RT) ölçer.")
+    st.header("İşitsel ve Görsel Sözcüksel Karar Görevi (LDT)")
     
     if not st.session_state.deney_basladi and not st.session_state.deney_bitti:
-        st.info("Deneyde 5 gerçek, 5 sahte (kurallı psödo-sözcük) sunulacaktır.")
+        st.write("Lütfen deneyi hangi modalitede (duyusal kanalda) sunmak istediğinizi seçin:")
+        
+        # Sunum Modu Seçici
+        sunum_modu = st.radio("Uyarıcı Sunum Modu:", ["Sadece Ses", "Sadece Yazı", "Ses + Yazı (Birlikte)"])
+        
         if st.button("▶️ Deneyi Başlat"):
+            st.session_state.secilen_mod = sunum_modu
             gercekler = random.sample(GERCEK_KELIMELER, 5)
             sahteler = [kuralli_kelime_uret(2, 3) for _ in range(5)]
             batarya = [{"kelime": k, "gercek_mi": True} for k in gercekler] + [{"kelime": k, "gercek_mi": False} for k in sahteler]
@@ -184,14 +189,24 @@ with sekme2:
         st.progress((mevcut_index) / len(st.session_state.batarya))
         st.subheader(f"Soru {mevcut_index + 1} / {len(st.session_state.batarya)}")
         
-        ses_dosyasi = sesi_sentezle(aktif_kelime, filtre_uygula=False)
-        st.audio(ses_dosyasi, format="audio/mp3", autoplay=True)
+        # Seçilen moda göre uyarıcıyı ekrana bas
+        mod = st.session_state.secilen_mod
+        
+        if mod in ["Sadece Ses", "Ses + Yazı (Birlikte)"]:
+            ses_dosyasi = sesi_sentezle(aktif_kelime, filtre_uygula=False)
+            st.audio(ses_dosyasi, format="audio/mp3", autoplay=True)
+            
+        if mod in ["Sadece Yazı", "Ses + Yazı (Birlikte)"]:
+            st.markdown(f"<h1 style='text-align: center; font-size: 60px; margin: 40px 0;'>{aktif_kelime.upper()}</h1>", unsafe_allow_html=True)
+            
+        if mod == "Sadece Ses":
+            st.markdown(f"<h1 style='text-align: center; font-size: 60px; margin: 40px 0;'>🔊</h1>", unsafe_allow_html=True)
         
         if st.session_state.baslangic_zamani == 0:
             st.session_state.baslangic_zamani = time.time()
             
         st.write("---")
-        st.write("### Duyduğunuz ses gerçek bir kelime mi?")
+        st.write("### Uyarıcı gerçek bir Türkçe kelime mi?")
         col1, col2 = st.columns(2)
         
         def cevabi_kaydet(verilen_cevap):
@@ -201,6 +216,7 @@ with sekme2:
             st.session_state.sonuclar.append({
                 "Kelime": st.session_state.batarya[mevcut_index]["kelime"],
                 "Tip": "Gerçek" if dogru_cevap else "Psödo",
+                "Sunum Modu": st.session_state.secilen_mod, # Modu buraya logluyoruz
                 "Cevap": "Gerçek" if verilen_cevap else "Psödo",
                 "Doğruluk": isabet,
                 "RT (ms)": round(rt, 2)
@@ -226,7 +242,7 @@ with sekme2:
         st.dataframe(df_sonuclar, use_container_width=True)
         csv_sonuclar = df_sonuclar.to_csv(index=False).encode('utf-8')
         st.download_button("📥 RT Sonuçlarını CSV İndir", data=csv_sonuclar, file_name="rt_sonuclari.csv", mime="text/csv")
-        if st.button("🔄 Sıfırla"):
+        if st.button("🔄 Sıfırla ve Yeni Deney Yap"):
             st.session_state.deney_bitti = False
             st.session_state.deney_basladi = False
             st.rerun()
