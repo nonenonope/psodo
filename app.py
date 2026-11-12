@@ -4,7 +4,14 @@ import io
 import pandas as pd
 import streamlit as st
 from gtts import gTTS
-from pydub import AudioSegment
+
+st.set_page_config(page_title="Yalancı Sözcük ve Sözcüksel Seçim Deneyi", layout="wide")
+
+try:
+    from pydub import AudioSegment
+    PYDUB_AKTIF = True
+except Exception:
+    PYDUB_AKTIF = False
 
 # --- TÜRKÇE KARAKTER YÖNETİMİ ---
 def turkce_kucult(metin):
@@ -24,7 +31,6 @@ INCE_ILK_UNLULER = ['e', 'i', 'ö', 'ü']
 INCE_DIGER_UNLULER = ['e', 'i', 'ü']   # /ö/ yalnızca ilk seslemde bulunur
 TUM_UNLULER = ['a', 'ı', 'o', 'u', 'e', 'i', 'ö', 'ü']
 
-# Konuma duyarlı ünsüz havuzları (/j/ yabancı kökenli olduğu için hariç)
 BASLANGIC_UNSUZLERI = [
     'b', 'c', 'ç', 'd', 'f', 'g', 'h', 'k', 'l',
     'm', 'n', 'p', 'r', 's', 'ş', 't', 'v', 'y', 'z'
@@ -33,7 +39,6 @@ IC_UNSUZLER = [
     'b', 'c', 'ç', 'd', 'f', 'g', 'ğ', 'h', 'k', 'l',
     'm', 'n', 'p', 'r', 's', 'ş', 't', 'v', 'y', 'z'
 ]
-# Sözcük sonu ünsüz filtresi (/b, c, d, g/ ve /j/ hariç)
 SON_UNSUZLER = [
     'ç', 'f', 'ğ', 'h', 'k', 'l', 'm', 'n',
     'p', 'r', 's', 'ş', 't', 'v', 'y', 'z'
@@ -41,7 +46,6 @@ SON_UNSUZLER = [
 TUM_UNSUZLER = IC_UNSUZLER + ['j']
 SERT_UNSUZLER = ['p', 'ç', 't', 'k', 'f', 'h', 's', 'ş']
 
-# Türkçenin seslem sonu (coda) kurallarına uygun ünsüz öbekleri (VCC / CVCC)
 TURKCE_SON_UNSUZ_OBEKLERI = [
     "lk", "lp", "lt", "lç", "nk", "nt", "nç",
     "rk", "rp", "rt", "rç", "rs", "rş", "st", "şt", "kt", "ft"
@@ -61,7 +65,6 @@ def unlu_sec(unlu_tipi, ilk_seslem_mi):
 
 def sonses_sec(son_seslem_mi):
     havuz = SON_UNSUZLER if son_seslem_mi else IC_UNSUZLER
-    # 'ğ' ağırlığını düşük tutarak doğal sıklık sağla
     agirliklar = [1 if u == 'ğ' else 5 for u in havuz]
     return random.choices(havuz, weights=agirliklar)[0]
 
@@ -142,9 +145,10 @@ def kuralli_sozcuk_uret(alt_sinir, ust_sinir, ileri_seslem=False):
     return sozcuk
 
 def morfolojik_ek_getir(sozcuk, ek_tipi):
-    son_unlu = [harf for harf in sozcuk if harf in TUM_UNLULER][-1]
-    son_harf = sozcuk[-1]
-    # 'ğ' sesbilgisel olarak ünsüz gibi davranır ve ünsüz sonlu ek alır
+    kucuk_sozcuk = turkce_kucult(sozcuk)
+    unluler = [harf for harf in kucuk_sozcuk if harf in TUM_UNLULER]
+    son_unlu = unluler[-1] if unluler else 'a'
+    son_harf = kucuk_sozcuk[-1]
     unsuzle_bitiyor = son_harf in TUM_UNSUZLER
     sertle_bitiyor = son_harf in SERT_UNSUZLER
     kalin_mi = son_unlu in KALIN_ILK_UNLULER
@@ -207,4 +211,10 @@ def morfolojik_ek_getir(sozcuk, ek_tipi):
 
 def jabberwocky_tumcesi_uret(alt_sinir, ust_sinir, ileri_seslem=False):
     k1 = kuralli_sozcuk_uret(alt_sinir, ust_sinir, ileri_seslem)
-    k2 = kuralli_sozcuk_uret
+    k2 = kuralli_sozcuk_uret(alt_sinir, ust_sinir, ileri_seslem)
+    k3 = kuralli_sozcuk_uret(alt_sinir, ust_sinir, ileri_seslem)
+
+    c1 = turkce_buyut(k1[:1]) + turkce_kucult(k1[1:])
+    k2_bulunma = morfolojik_ek_getir(k2, 'bulunma')
+    k3_genis = morfolojik_ek_getir(k3, 'genis_zaman')
+    k3_bildirme = morfolojik_ek_getir(
