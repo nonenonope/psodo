@@ -60,40 +60,14 @@ def unlu_sec(unlu_tipi, ilk_mi):
 def sonses_sec(son_mi):
     havuz = SON_UNSUZ if son_mi else IC_UNSUZ
     agirlik = [1 if u == 'ğ' else 5 for u in havuz]
-    return random.choices(havuz, weights=agirlik)[0]
+    secilen = random.choices(havuz, weights=agirlik)
+    return secilen[0]
 
-def onses_sec(ilk_mi, onceki_tip, onceki_son_harf):
+def onses_sec(ilk_mi, onceki_tip, onceki_harf):
     havuz = list(BAS_UNSUZ if ilk_mi else IC_UNSUZ)
     if onceki_tip == "unsuz":
         havuz = [u for u in havuz if u != 'ğ']
-        if onceki_son_harf in OTUMLU_ENGEL:
+        if onceki_harf in OTUMLU_ENGEL:
             havuz = [u for u in havuz if u not in SERT_UNSUZLER]
-        elif onceki_son_harf in SERT_UNSUZLER:
-            havuz = [u for u in havuz if u not in OTUMLU_ENGEL]
-    return random.choice(havuz)
-
-def hece_uret(
-    unlu_tipi, onceki_tip, onceki_son_harf,
-    unsuz_say, ilk_mi, son_mi, ileri=False
-):
-    unlu = unlu_sec(unlu_tipi, ilk_mi)
-
-    if onceki_tip == "unlu":
-        if ileri:
-            yapilar = ["CV", "CVC", "CVCC"]
-            w = [50, 38, 12]
-        else:
-            yapilar = ["CV", "CVC"]
-            w = [55, 45]
-    elif unsuz_say >= 2:
-        yapilar = ["VC", "V"]
-        w = [70, 30]
-    else:
-        if ileri:
-            yapilar = ["CV", "CVC", "VC", "V", "CVCC", "VCC"]
-            w = [40, 35, 8, 5, 8, 4]
-        else:
-            yapilar = ["CV", "CVC", "VC", "V"]
-            w = [45, 40, 10, 5]
-
-    yapi = random.choices(yapilar,
+        elif onceki_harf in SERT_UNSUZLER:
+            havuz = [u for
