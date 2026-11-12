@@ -6,6 +6,11 @@ import streamlit as st
 from gtts import gTTS
 from pydub import AudioSegment
 
+st.set_page_config(
+    page_title="Yalancı Sözcük ve Sözcüksel Seçim Deneyi",
+    layout="wide"
+)
+
 # --- TÜRKÇE KARAKTER YÖNETİMİ ---
 def turkce_kucult(metin):
     if not isinstance(metin, str):
@@ -82,3 +87,94 @@ def hece_uret(
         if ileri:
             yapilar = ["CV", "CVC", "CVCC"]
             agirliklar = [50, 38, 12]
+        else:
+            yapilar = ["CV", "CVC"]
+            agirliklar = [55, 45]
+    elif unsuz_say >= 2:
+        yapilar = ["VC", "V"]
+        agirliklar = [70, 30]
+    else:
+        if ileri:
+            yapilar = ["CV", "CVC", "VC", "V", "CVCC", "VCC"]
+            agirliklar = [40, 35, 8, 5, 8, 4]
+        else:
+            yapilar = ["CV", "CVC", "VC", "V"]
+            agirliklar = [45, 40, 10, 5]
+
+    yapi = random.choices(yapilar, weights=agirliklar)[0]
+
+    if yapi == "V":
+        return unlu
+    if yapi == "VC":
+        return unlu + sonses_sec(son_mi)
+    if yapi == "CV":
+        onses = onses_sec(ilk_mi, onceki_tip, onceki_son_harf)
+        return onses + unlu
+    if yapi == "CVC":
+        onses = onses_sec(ilk_mi, onceki_tip, onceki_son_harf)
+        return onses + unlu + sonses_sec(son_mi)
+    if yapi == "VCC":
+        return unlu + random.choice(SON_OBEKLER)
+    if yapi == "CVCC":
+        onses = onses_sec(ilk_mi, onceki_tip, onceki_son_harf)
+        obek = random.choice(SON_OBEKLER)
+        return onses + unlu + obek
+    return unlu
+
+def kuralli_sozcuk_uret(alt_sinir, ust_sinir, ileri=False):
+    gercek_alt = min(alt_sinir, ust_sinir)
+    gercek_ust = max(alt_sinir, ust_sinir)
+    ses_sayisi = random.randint(gercek_alt, gercek_ust)
+    unlu_tipi = random.choice(["kalin", "ince"])
+    sozcuk = ""
+    onceki_tip = ""
+    onceki_son_harf = ""
+    unsuz_say = 0
+
+    for i in range(ses_sayisi):
+        ilk_mi = (i == 0)
+        son_mi = (i == ses_sayisi - 1)
+        hece = hece_uret(
+            unlu_tipi, onceki_tip, onceki_son_harf,
+            unsuz_say, ilk_mi, son_mi, ileri
+        )
+        sozcuk += hece
+        onceki_son_harf = sozcuk[-1]
+
+        if onceki_son_harf in TUM_UNLULER:
+            onceki_tip = "unlu"
+            unsuz_say = 0
+        else:
+            onceki_tip = "unsuz"
+            if len(sozcuk) >= 2 and sozcuk[-2] in TUM_UNSUZLER:
+                unsuz_say = 2
+            else:
+                unsuz_say = 1
+
+    return sozcuk
+
+def morfolojik_ek_getir(sozcuk, ek_tipi):
+    unlu_listesi = [h for h in sozcuk if h in TUM_UNLULER]
+    son_unlu = unlu_listesi[-1]
+    son_harf = sozcuk[-1]
+    unsuzle_bitiyor = son_harf in TUM_UNSUZLER
+    sertle_bitiyor = son_harf in SERT_UNSUZLER
+    kalin_mi = son_unlu in KALIN_ILK
+
+    if ek_tipi == "cogul":
+        return sozcuk + ("lar" if kalin_mi else "ler")
+    if ek_tipi == "bulunma":
+        if sertle_bitiyor:
+            ek = "ta" if kalin_mi else "te"
+        else:
+            ek = "da" if kalin_mi else "de"
+        return sozcuk + ek
+    if ek_tipi == "belirtme":
+        kaynastirma = "" if unsuzle_bitiyor else "y"
+        if son_unlu in ['a', 'ı']:
+            ek = "ı"
+        elif son_unlu in ['e', 'i']:
+            ek = "i"
+        elif son_unlu in ['o', 'u']:
+            ek = "u"
+        else:
