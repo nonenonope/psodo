@@ -66,9 +66,7 @@ def morfolojik_ek_getir(sozcuk, ek_tipi):
     son_harf = sozcuk[-1]
     unsuzle_bitiyor = son_harf in UNSUZLER
     sertle_bitiyor = son_harf in SERT_UNSUZLER
-    
-    if ek_tipi == "cogul": 
-        return sozcuk + ("lar" if son_unlu in KALIN_UNLULER else "ler")
+    if ek_tipi == "cogul": return sozcuk + ("lar" if son_unlu in KALIN_UNLULER else "ler")
     elif ek_tipi == "bulunma":
         ek = "ta" if sertle_bitiyor and son_unlu in KALIN_UNLULER else "te" if sertle_bitiyor and son_unlu in INCE_UNLULER else "da" if son_unlu in KALIN_UNLULER else "de"
         return sozcuk + ek
@@ -92,8 +90,7 @@ def morfolojik_ek_getir(sozcuk, ek_tipi):
             elif son_unlu in ['e', 'i']: ek = "ir"
             elif son_unlu in ['o', 'u']: ek = "ur"
             else: ek = "ür"
-        else: 
-            ek = "r"
+        else: ek = "r"
         return sozcuk + ek
     elif ek_tipi == "bildirme":
         d_t = "t" if sertle_bitiyor else "d"
@@ -106,39 +103,4 @@ def morfolojik_ek_getir(sozcuk, ek_tipi):
 
 def jabberwocky_tumcesi_uret(alt_sinir, ust_sinir):
     k1 = kuralli_sozcuk_uret(alt_sinir, ust_sinir)
-    k2 = kuralli_sozcuk_uret(alt_sinir, ust_sinir)
-    k3 = kuralli_sozcuk_uret(alt_sinir, ust_sinir)
-    c1 = turkce_buyut(k1[:1]) + turkce_kucult(k1[1:])
-    k2_bulunma = morfolojik_ek_getir(k2, 'bulunma')
-    k3_genis = morfolojik_ek_getir(k3, 'genis_zaman')
-    k3_bildirme = morfolojik_ek_getir(k3, 'bildirme')
-    k1_cogul = morfolojik_ek_getir(c1, 'cogul')
-    k2_belirtme = morfolojik_ek_getir(k2, 'belirtme')
-    k3_gecmis = morfolojik_ek_getir(k3, 'gecmis_zaman')
-    
-    cerceveler = [
-        f"{c1} çok {k2} bir {k3_bildirme}.",
-        f"{k1_cogul} {k2_bulunma} {k3_genis}.",
-        f"{c1} {k2_belirtme} {k3_gecmis}."
-    ]
-    return random.choice(cerceveler)
-
-def sesi_sentezle(metin, filtre_uygula=False):
-    tts = gTTS(text=metin, lang='tr')
-    ses_bellek = io.BytesIO()
-    tts.write_to_fp(ses_bellek)
-    ses_bellek.seek(0)
-    if filtre_uygula:
-        audio = AudioSegment.from_file(ses_bellek, format="mp3")
-        audio = audio.low_pass_filter(400)
-        cikis_bellek = io.BytesIO()
-        audio.export(cikis_bellek, format="mp3")
-        cikis_bellek.seek(0)
-        return cikis_bellek
-    return ses_bellek
-
-# --- 2. STREAMLIT ARAYÜZÜ (OTURUM YÖNETİMİ) ---
-if 'deney_basladi' not in st.session_state: st.session_state.deney_basladi = False
-if 'deney_bitti' not in st.session_state: st.session_state.deney_bitti = False
-if 'batarya' not in st.session_state: st.session_state.batarya = []
-if
+    k2 = kuralli_sozcuk_uret
