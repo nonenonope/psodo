@@ -6,9 +6,6 @@ import streamlit as st
 from gtts import gTTS
 from pydub import AudioSegment
 
-# --- SAYFA YAPILANDIRMASI ---
-st.set_page_config(page_title="Yalancı Sözcük ve Sözcüksel Seçim Deneyi", layout="wide")
-
 # --- TÜRKÇE KARAKTER YÖNETİMİ ---
 def turkce_kucult(metin):
     if not isinstance(metin, str): return metin
@@ -75,22 +72,4 @@ def morfolojik_ek_getir(sozcuk, ek_tipi):
         return sozcuk + ek
     elif ek_tipi == "belirtme":
         kaynastirma = "" if unsuzle_bitiyor else "y"
-        if son_unlu in ['a', 'ı']: ek = "ı"
-        elif son_unlu in ['e', 'i']: ek = "i"
-        elif son_unlu in ['o', 'u']: ek = "u"
-        else: ek = "ü"
-        return sozcuk + kaynastirma + ek
-    elif ek_tipi == "gecmis_zaman":
-        d_t = "t" if sertle_bitiyor else "d"
-        if son_unlu in ['a', 'ı']: ek = d_t + "ılar"
-        elif son_unlu in ['e', 'i']: ek = d_t + "iler"
-        elif son_unlu in ['o', 'u']: ek = d_t + "ular"
-        else: ek = d_t + "üler"
-        return sozcuk + ek
-    elif ek_tipi == "genis_zaman":
-        if unsuzle_bitiyor:
-            if son_unlu in ['a', 'ı']: ek = "ır"
-            elif son_unlu in ['e', 'i']: ek = "ir"
-            elif son_unlu in ['o', 'u']: ek = "ur"
-            else: ek = "ür"
-        else: ek = "r"
+        if son_unlu in ['a', 'ı']: ek = "
