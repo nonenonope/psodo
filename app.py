@@ -28,6 +28,10 @@ KALIN_DIGER = ['a', 'ı', 'u']
 INCE_ILK = ['e', 'i', 'ö', 'ü']
 INCE_DIGER = ['e', 'i', 'ü']
 TUM_UNLULER = ['a', 'ı', 'o', 'u', 'e', 'i', 'ö', 'ü']
+DAR_UNLU = {
+    'a': 'ı', 'ı': 'ı', 'e': 'i', 'i': 'i',
+    'o': 'u', 'u': 'u', 'ö': 'ü', 'ü': 'ü'
+}
 
 BAS_UNSUZ = [
     'b', 'c', 'ç', 'd', 'f', 'g', 'h', 'k', 'l',
@@ -84,12 +88,8 @@ def hece_uret(
     unlu = unlu_sec(unlu_tipi, ilk_mi)
 
     if onceki_tip == "unlu":
-        if ileri:
-            yapilar = ["CV", "CVC", "CVCC"]
-            agirliklar = [50, 38, 12]
-        else:
-            yapilar = ["CV", "CVC"]
-            agirliklar = [55, 45]
+        yapilar = ["CV", "CVC", "CVCC"] if ileri else ["CV", "CVC"]
+        agirliklar = [50, 38, 12] if ileri else [55, 45]
     elif unsuz_say >= 2:
         yapilar = ["VC", "V"]
         agirliklar = [70, 30]
@@ -108,73 +108,8 @@ def hece_uret(
     if yapi == "VC":
         return unlu + sonses_sec(son_mi)
     if yapi == "CV":
-        onses = onses_sec(ilk_mi, onceki_tip, onceki_son_harf)
-        return onses + unlu
+        return onses_sec(ilk_mi, onceki_tip, onceki_son_harf) + unlu
     if yapi == "CVC":
         onses = onses_sec(ilk_mi, onceki_tip, onceki_son_harf)
         return onses + unlu + sonses_sec(son_mi)
-    if yapi == "VCC":
-        return unlu + random.choice(SON_OBEKLER)
-    if yapi == "CVCC":
-        onses = onses_sec(ilk_mi, onceki_tip, onceki_son_harf)
-        obek = random.choice(SON_OBEKLER)
-        return onses + unlu + obek
-    return unlu
-
-def kuralli_sozcuk_uret(alt_sinir, ust_sinir, ileri=False):
-    gercek_alt = min(alt_sinir, ust_sinir)
-    gercek_ust = max(alt_sinir, ust_sinir)
-    ses_sayisi = random.randint(gercek_alt, gercek_ust)
-    unlu_tipi = random.choice(["kalin", "ince"])
-    sozcuk = ""
-    onceki_tip = ""
-    onceki_son_harf = ""
-    unsuz_say = 0
-
-    for i in range(ses_sayisi):
-        ilk_mi = (i == 0)
-        son_mi = (i == ses_sayisi - 1)
-        hece = hece_uret(
-            unlu_tipi, onceki_tip, onceki_son_harf,
-            unsuz_say, ilk_mi, son_mi, ileri
-        )
-        sozcuk += hece
-        onceki_son_harf = sozcuk[-1]
-
-        if onceki_son_harf in TUM_UNLULER:
-            onceki_tip = "unlu"
-            unsuz_say = 0
-        else:
-            onceki_tip = "unsuz"
-            if len(sozcuk) >= 2 and sozcuk[-2] in TUM_UNSUZLER:
-                unsuz_say = 2
-            else:
-                unsuz_say = 1
-
-    return sozcuk
-
-def morfolojik_ek_getir(sozcuk, ek_tipi):
-    unlu_listesi = [h for h in sozcuk if h in TUM_UNLULER]
-    son_unlu = unlu_listesi[-1]
-    son_harf = sozcuk[-1]
-    unsuzle_bitiyor = son_harf in TUM_UNSUZLER
-    sertle_bitiyor = son_harf in SERT_UNSUZLER
-    kalin_mi = son_unlu in KALIN_ILK
-
-    if ek_tipi == "cogul":
-        return sozcuk + ("lar" if kalin_mi else "ler")
-    if ek_tipi == "bulunma":
-        if sertle_bitiyor:
-            ek = "ta" if kalin_mi else "te"
-        else:
-            ek = "da" if kalin_mi else "de"
-        return sozcuk + ek
-    if ek_tipi == "belirtme":
-        kaynastirma = "" if unsuzle_bitiyor else "y"
-        if son_unlu in ['a', 'ı']:
-            ek = "ı"
-        elif son_unlu in ['e', 'i']:
-            ek = "i"
-        elif son_unlu in ['o', 'u']:
-            ek = "u"
-        else:
+    if yapi == "VCC
