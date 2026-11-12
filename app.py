@@ -96,9 +96,4 @@ def morfolojik_ek_getir(sozcuk, ek_tipi):
         d_t = "t" if sertle_bitiyor else "d"
         if son_unlu in ['a', 'ı']: ek = d_t + "ır"
         elif son_unlu in ['e', 'i']: ek = d_t + "ir"
-        elif son_unlu in ['o', 'u']: ek = d_t + "ur"
-        else: ek = d_t + "ür"
-        return sozcuk + ek
-    return sozcuk
-
-def jabberw
+        elif
