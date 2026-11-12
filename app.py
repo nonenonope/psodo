@@ -146,7 +146,7 @@ if 'secilen_kanal' not in st.session_state: st.session_state.secilen_kanal = "İ
 st.set_page_config(page_title="Yalancı Sözcük ve Sözcüksel Seçim Deneyi", layout="wide")
 st.title("🧠 Klinik Dilbilimsel Yalancı Sözcük ve Tepki Süresi Deneyi")
 
-sekme1, sekme2 = st.tabs(["⚙️ Uyaran Üreteci & Bürünsel Uyarlama", "⏱️ Sözcüksel Seçim Deneyi"])
+sekme1, sekme2 = st.tabs(["⚙️ Uyaran Üreteci & Bürünsel Uyarlama Üretici", "⏱️ Sözcüksel Seçim Deneyi"])
 
 # --- SEKME 1: ÜRETEC ---
 with sekme1:
@@ -157,7 +157,7 @@ with sekme1:
         alt_sinir = st.slider("Alt Sınır (En Az Ses Sayısı)", 1, 5, 2)
     with col2:
         ust_sinir = st.slider("Üst Sınır (En Çok Ses Sayısı)", 1, 5, 3)
-        filtre_uygula = st.checkbox("Alçak Geçirgen Akustik Filtre Uygula (400Hz)", value=True)
+        filtre_uygula = st.checkbox("Alçak Geçiren Akustik Filtre Uygula (400Hz)", value=True)
 
     if st.button("🚀 Uyaranları Üret"):
         with st.spinner("Üretiliyor..."):
