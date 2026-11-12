@@ -8,34 +8,22 @@ from pydub import AudioSegment
 
 # --- TÜRKÇE KARAKTER YÖNETİMİ ---
 def turkce_kucult(metin):
-    if not isinstance(metin, str):
-        return metin
+    if not isinstance(metin, str): return metin
     return metin.replace('İ', 'i').replace('I', 'ı').lower()
 
 def turkce_buyut(metin):
-    if not isinstance(metin, str):
-        return metin
+    if not isinstance(metin, str): return metin
     return metin.replace('i', 'İ').replace('ı', 'I').upper()
 
 # --- 1. DİLBİLİMSEL KURALLAR VE SES ENVANTERİ ---
 KALIN_UNLULER = ['a', 'ı', 'o', 'u']
 INCE_UNLULER = ['e', 'i', 'ö', 'ü']
-UNSUZLER = [
-    'b', 'c', 'ç', 'd', 'f', 'g', 'ğ', 'h', 'j', 'k', 'l',
-    'm', 'n', 'p', 'r', 's', 'ş', 't', 'v', 'y', 'z'
-]
+UNSUZLER = ['b', 'c', 'ç', 'd', 'f', 'g', 'ğ', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'r', 's', 'ş', 't', 'v', 'y', 'z']
 SERT_UNSUZLER = ['p', 'ç', 't', 'k', 'f', 'h', 's', 'ş']
-GERCEK_SOZCUKLER = [
-    "masa", "kalem", "defter", "çanta", "kapı", "güneş",
-    "deniz", "kitap", "bardak", "yıldız", "orman", "kedi"
-]
+GERCEK_SOZCUKLER = ["masa", "kalem", "defter", "çanta", "kapı", "güneş", "deniz", "kitap", "bardak", "yıldız", "orman", "kedi"]
 
 def hece_uret(unlu_tipi, onceki_son_harf_tipi, ardisik_unsuz_sayisi):
-    if unlu_tipi == "kalin":
-        unlu = random.choice(KALIN_UNLULER)
-    else:
-        unlu = random.choice(INCE_UNLULER)
-
+    unlu = random.choice(KALIN_UNLULER) if unlu_tipi == "kalin" else random.choice(INCE_UNLULER)
     if onceki_son_harf_tipi == "unlu":
         yapilar = ["CV", "CVC"]
         secilen_yapi = random.choices(yapilar, weights=[55, 45])[0]
@@ -45,15 +33,11 @@ def hece_uret(unlu_tipi, onceki_son_harf_tipi, ardisik_unsuz_sayisi):
     else:
         yapilar = ["CV", "CVC", "VC", "V"]
         secilen_yapi = random.choices(yapilar, weights=[45, 40, 10, 5])[0]
-
-    if secilen_yapi == "V":
-        return unlu
-    elif secilen_yapi == "VC":
-        return unlu + random.choice(UNSUZLER)
-    elif secilen_yapi == "CV":
-        return random.choice(UNSUZLER) + unlu
-    elif secilen_yapi == "CVC":
-        return random.choice(UNSUZLER) + unlu + random.choice(UNSUZLER)
+        
+    if secilen_yapi == "V": return unlu
+    elif secilen_yapi == "VC": return unlu + random.choice(UNSUZLER)
+    elif secilen_yapi == "CV": return random.choice(UNSUZLER) + unlu
+    elif secilen_yapi == "CVC": return random.choice(UNSUZLER) + unlu + random.choice(UNSUZLER)
 
 def kuralli_sozcuk_uret(alt_sinir, ust_sinir):
     ses_sayisi = random.randint(alt_sinir, ust_sinir)
@@ -61,13 +45,11 @@ def kuralli_sozcuk_uret(alt_sinir, ust_sinir):
     sozcuk = ""
     onceki_son_harf_tipi = ""
     ardisik_unsuz_sayisi = 0
-
     for i in range(ses_sayisi):
         hece = hece_uret(unlu_tipi, onceki_son_harf_tipi, ardisik_unsuz_sayisi)
         if i == 0 and hece.startswith("ğ"):
             hece = hece.replace("ğ", random.choice(["g", "k", "d"]), 1)
         sozcuk += hece
-
         if sozcuk[-1] in (KALIN_UNLULER + INCE_UNLULER):
             onceki_son_harf_tipi = "unlu"
             ardisik_unsuz_sayisi = 0
@@ -80,94 +62,61 @@ def kuralli_sozcuk_uret(alt_sinir, ust_sinir):
     return sozcuk
 
 def morfolojik_ek_getir(sozcuk, ek_tipi):
-    unluler = KALIN_UNLULER + INCE_UNLULER
-    son_unlu = [harf for harf in sozcuk if harf in unluler][-1]
+    son_unlu = [harf for harf in sozcuk if harf in KALIN_UNLULER + INCE_UNLULER][-1]
     son_harf = sozcuk[-1]
     unsuzle_bitiyor = son_harf in UNSUZLER
     sertle_bitiyor = son_harf in SERT_UNSUZLER
-
-    if ek_tipi == "cogul":
-        ek = "lar" if son_unlu in KALIN_UNLULER else "ler"
-        return sozcuk + ek
-
+    if ek_tipi == "cogul": return sozcuk + ("lar" if son_unlu in KALIN_UNLULER else "ler")
     elif ek_tipi == "bulunma":
-        if sertle_bitiyor:
-            ek = "ta" if son_unlu in KALIN_UNLULER else "te"
-        else:
-            ek = "da" if son_unlu in KALIN_UNLULER else "de"
+        ek = "ta" if sertle_bitiyor and son_unlu in KALIN_UNLULER else "te" if sertle_bitiyor and son_unlu in INCE_UNLULER else "da" if son_unlu in KALIN_UNLULER else "de"
         return sozcuk + ek
-
     elif ek_tipi == "belirtme":
         kaynastirma = "" if unsuzle_bitiyor else "y"
-        if son_unlu in ['a', 'ı']:
-            ek = "ı"
-        elif son_unlu in ['e', 'i']:
-            ek = "i"
-        elif son_unlu in ['o', 'u']:
-            ek = "u"
-        else:
-            ek = "ü"
+        if son_unlu in ['a', 'ı']: ek = "ı"
+        elif son_unlu in ['e', 'i']: ek = "i"
+        elif son_unlu in ['o', 'u']: ek = "u"
+        else: ek = "ü"
         return sozcuk + kaynastirma + ek
-
     elif ek_tipi == "gecmis_zaman":
         d_t = "t" if sertle_bitiyor else "d"
-        if son_unlu in ['a', 'ı']:
-            ek = d_t + "ılar"
-        elif son_unlu in ['e', 'i']:
-            ek = d_t + "iler"
-        elif son_unlu in ['o', 'u']:
-            ek = d_t + "ular"
-        else:
-            ek = d_t + "üler"
+        if son_unlu in ['a', 'ı']: ek = d_t + "ılar"
+        elif son_unlu in ['e', 'i']: ek = d_t + "iler"
+        elif son_unlu in ['o', 'u']: ek = d_t + "ular"
+        else: ek = d_t + "üler"
         return sozcuk + ek
-
     elif ek_tipi == "genis_zaman":
         if unsuzle_bitiyor:
-            if son_unlu in ['a', 'ı']:
-                ek = "ır"
-            elif son_unlu in ['e', 'i']:
-                ek = "ir"
-            elif son_unlu in ['o', 'u']:
-                ek = "ur"
-            else:
-                ek = "ür"
-        else:
-            ek = "r"
+            if son_unlu in ['a', 'ı']: ek = "ır"
+            elif son_unlu in ['e', 'i']: ek = "ir"
+            elif son_unlu in ['o', 'u']: ek = "ur"
+            else: ek = "ür"
+        else: ek = "r"
         return sozcuk + ek
-
     elif ek_tipi == "bildirme":
         d_t = "t" if sertle_bitiyor else "d"
-        if son_unlu in ['a', 'ı']:
-            ek = d_t + "ır"
-        elif son_unlu in ['e', 'i']:
-            ek = d_t + "ir"
-        elif son_unlu in ['o', 'u']:
-            ek = d_t + "ur"
-        else:
-            ek = d_t + "ür"
+        if son_unlu in ['a', 'ı']: ek = d_t + "ır"
+        elif son_unlu in ['e', 'i']: ek = d_t + "ir"
+        elif son_unlu in ['o', 'u']: ek = d_t + "ur"
+        else: ek = d_t + "ür"
         return sozcuk + ek
-
     return sozcuk
 
 def jabberwocky_tumcesi_uret(alt_sinir, ust_sinir):
     k1 = kuralli_sozcuk_uret(alt_sinir, ust_sinir)
     k2 = kuralli_sozcuk_uret(alt_sinir, ust_sinir)
     k3 = kuralli_sozcuk_uret(alt_sinir, ust_sinir)
-
-    bas_k1 = turkce_buyut(k1[:1]) + turkce_kucult(k1[1:])
-    t1_son = morfolojik_ek_getir(k3, 'bildirme')
-
-    t2_bas = morfolojik_ek_getir(bas_k1, 'cogul')
-    t2_orta = morfolojik_ek_getir(k2, 'bulunma')
-    t2_son = morfolojik_ek_getir(k3, 'genis_zaman')
-
-    t3_orta = morfolojik_ek_getir(k2, 'belirtme')
-    t3_son = morfolojik_ek_getir(k3, 'gecmis_zaman')
-
+    c1 = turkce_buyut(k1[:1]) + turkce_kucult(k1[1:])
+    k2_bulunma = morfolojik_ek_getir(k2, 'bulunma')
+    k3_genis = morfolojik_ek_getir(k3, 'genis_zaman')
+    k3_bildirme = morfolojik_ek_getir(k3, 'bildirme')
+    k1_cogul = morfolojik_ek_getir(c1, 'cogul')
+    k2_belirtme = morfolojik_ek_getir(k2, 'belirtme')
+    k3_gecmis = morfolojik_ek_getir(k3, 'gecmis_zaman')
+    
     cerceveler = [
-        f"{bas_k1} çok {k2} bir {t1_son}.",
-        f"{t2_bas} {t2_orta} {t2_son}.",
-        f"{bas_k1} {t3_orta} {t3_son}."
+        f"{c1} çok {k2} bir {k3_bildirme}.",
+        f"{k1_cogul} {k2_bulunma} {k3_genis}.",
+        f"{c1} {k2_belirtme} {k3_gecmis}."
     ]
     return random.choice(cerceveler)
 
@@ -186,33 +135,20 @@ def sesi_sentezle(metin, filtre_uygula=False):
     return ses_bellek
 
 # --- 2. STREAMLIT ARAYÜZÜ (OTURUM YÖNETİMİ) ---
-if 'deney_basladi' not in st.session_state:
-    st.session_state.deney_basladi = False
-if 'deney_bitti' not in st.session_state:
-    st.session_state.deney_bitti = False
-if 'batarya' not in st.session_state:
-    st.session_state.batarya = []
-if 'mevcut_soru' not in st.session_state:
-    st.session_state.mevcut_soru = 0
-if 'sonuclar' not in st.session_state:
-    st.session_state.sonuclar = []
-if 'baslangic_zamani' not in st.session_state:
-    st.session_state.baslangic_zamani = 0
-if 'secilen_kanal' not in st.session_state:
-    st.session_state.secilen_kanal = "İşitsel"
+if 'deney_basladi' not in st.session_state: st.session_state.deney_basladi = False
+if 'deney_bitti' not in st.session_state: st.session_state.deney_bitti = False
+if 'batarya' not in st.session_state: st.session_state.batarya = []
+if 'mevcut_soru' not in st.session_state: st.session_state.mevcut_soru = 0
+if 'sonuclar' not in st.session_state: st.session_state.sonuclar = []
+if 'baslangic_zamani' not in st.session_state: st.session_state.baslangic_zamani = 0
+if 'secilen_kanal' not in st.session_state: st.session_state.secilen_kanal = "İşitsel"
 
-st.set_page_config(
-    page_title="Yalancı Sözcük ve Sözcüksel Seçim Deneyi",
-    layout="wide"
-)
+st.set_page_config(page_title="Yalancı Sözcük ve Sözcüksel Seçim Deneyi", layout="wide")
 st.title("🧠 Klinik Dilbilimsel Yalancı Sözcük ve Tepki Süresi Deneyi")
 
-sekme1, sekme2 = st.tabs([
-    "⚙️ Uyaran Üreteci & Bürünsel Uyarlama",
-    "⏱️ Klinik Dilbilimsel Deney (Sözcüksel Seçim)"
-])
+sekme1, sekme2 = st.tabs(["⚙️ Uyaran Üreteci & Bürünsel Uyarlama", "⏱️ Sözcüksel Seçim Deneyi"])
 
-# --- SEKME 1: ÜRETEÇ ---
+# --- SEKME 1: ÜRETEC ---
 with sekme1:
     st.header("Uyaran Bataryası Üret")
     col1, col2 = st.columns(2)
@@ -221,57 +157,41 @@ with sekme1:
         alt_sinir = st.slider("Alt Sınır (En Az Ses Sayısı)", 1, 5, 2)
     with col2:
         ust_sinir = st.slider("Üst Sınır (En Çok Ses Sayısı)", 1, 5, 3)
-        filtre_uygula = st.checkbox(
-            "Alçak Geçiren Akustik Filtre Uygula (400Hz)",
-            value=True
-        )
+        filtre_uygula = st.checkbox("Alçak Geçirgen Akustik Filtre Uygula (400Hz)", value=True)
 
     if st.button("🚀 Uyaranları Üret"):
         with st.spinner("Üretiliyor..."):
-            sozcukler = [
-                kuralli_sozcuk_uret(alt_sinir, ust_sinir)
-                for _ in range(sozcuk_sayisi)
-            ]
-            tumceler = [
-                jabberwocky_tumcesi_uret(alt_sinir, ust_sinir)
-                for _ in range(3)
-            ]
-
+            sozcukler = [kuralli_sozcuk_uret(alt_sinir, ust_sinir) for _ in range(sozcuk_sayisi)]
+            tumceler = [jabberwocky_tumcesi_uret(alt_sinir, ust_sinir) for _ in range(3)]
+            
             st.subheader("🔊 Bürünsel Uyarlama (Jabberwocky Tümceleri)")
             for t in tumceler:
                 st.write(f"- {t}")
-
+                
             okunacak_metin = ". ".join(tumceler)
             ses_ciktisi = sesi_sentezle(okunacak_metin, filtre_uygula)
             st.audio(ses_ciktisi, format="audio/mp3")
-
+            
             st.subheader("📋 Tekil Uyaran Listesi")
             df = pd.DataFrame({"Yalancı Sözcükler": sozcukler})
             st.dataframe(df, use_container_width=True)
             csv = df.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                "📥 Listeyi CSV Olarak İndir",
-                data=csv,
-                file_name="uyaran_bataryasi.csv",
-                mime="text/csv"
-            )
+            st.download_button("📥 Listeyi CSV Olarak İndir", data=csv, file_name="uyaran_bataryasi.csv", mime="text/csv")
 
-# --- SEKME 2: KLİNİK DİLBİLİMSEL DENEY ---
+# --- SEKME 2: KLİNİK DENEY ---
 with sekme2:
     st.header("Sözcüksel Seçim Deneyi")
-
+    
     if not st.session_state.deney_basladi and not st.session_state.deney_bitti:
         st.write("Lütfen deneyi hangi duyusal kanaldan almak istediğinizi seçin:")
+        
         sunum_kanali = st.radio("Uyaran Sunum Kanalı:", ["İşitsel", "Görsel"])
-
+        
         if st.button("▶️ Deneyi Başlat"):
             st.session_state.secilen_kanal = sunum_kanali
             gercekler = random.sample(GERCEK_SOZCUKLER, 5)
             sahteler = [kuralli_sozcuk_uret(2, 3) for _ in range(5)]
-            batarya = (
-                [{"sozcuk": k, "gercek_mi": True} for k in gercekler]
-                + [{"sozcuk": k, "gercek_mi": False} for k in sahteler]
-            )
+            batarya = [{"sozcuk": k, "gercek_mi": True} for k in gercekler] + [{"sozcuk": k, "gercek_mi": False} for k in sahteler]
             random.shuffle(batarya)
             st.session_state.batarya = batarya
             st.session_state.deney_basladi = True
@@ -282,43 +202,33 @@ with sekme2:
     elif st.session_state.deney_basladi and not st.session_state.deney_bitti:
         mevcut_index = st.session_state.mevcut_soru
         aktif_sozcuk = st.session_state.batarya[mevcut_index]["sozcuk"]
-        toplam_soru = len(st.session_state.batarya)
-
-        st.progress(mevcut_index / toplam_soru)
-        st.subheader(f"Soru {mevcut_index + 1} / {toplam_soru}")
-
+        st.progress((mevcut_index) / len(st.session_state.batarya))
+        st.subheader(f"Soru {mevcut_index + 1} / {len(st.session_state.batarya)}")
+        
         # --- FİKSASYON ARTISI ---
         placeholder = st.empty()
-        placeholder.markdown(
-            "<h1 style='text-align: center; font-size: 80px; margin: 40px 0;'>+</h1>",
-            unsafe_allow_html=True
-        )
+        placeholder.markdown("<h1 style='text-align: center; font-size: 80px; margin: 40px 0;'>+</h1>", unsafe_allow_html=True)
         time.sleep(0.5)
         placeholder.empty()
-
+        
         kanal = st.session_state.secilen_kanal
-
+        
         if kanal == "İşitsel":
             ses_dosyasi = sesi_sentezle(aktif_sozcuk, filtre_uygula=False)
             st.audio(ses_dosyasi, format="audio/mp3", autoplay=True)
-            st.markdown(
-                "<h1 style='text-align: center; font-size: 60px; margin: 40px 0;'>🔊</h1>",
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<h1 style='text-align: center; font-size: 60px; margin: 40px 0;'>🔊</h1>", unsafe_allow_html=True)
+            
         elif kanal == "Görsel":
             gosterilecek_metin = turkce_buyut(aktif_sozcuk)
-            st.markdown(
-                f"<h1 style='text-align: center; font-size: 60px; margin: 40px 0;'>{gosterilecek_metin}</h1>",
-                unsafe_allow_html=True
-            )
-
+            st.markdown(f"<h1 style='text-align: center; font-size: 60px; margin: 40px 0;'>{gosterilecek_metin}</h1>", unsafe_allow_html=True)
+        
         if st.session_state.baslangic_zamani == 0:
             st.session_state.baslangic_zamani = time.time()
-
+            
         st.write("---")
         st.write("### Gelen uyaran gerçek bir Türkçe sözcük mü?")
         col1, col2 = st.columns(2)
-
+        
         def cevabi_kaydet(verilen_cevap):
             ts = (time.time() - st.session_state.baslangic_zamani) * 1000
             dogru_cevap = st.session_state.batarya[mevcut_index]["gercek_mi"]
@@ -333,7 +243,7 @@ with sekme2:
             })
             st.session_state.baslangic_zamani = 0
             st.session_state.mevcut_soru += 1
-            if st.session_state.mevcut_soru >= toplam_soru:
+            if st.session_state.mevcut_soru >= len(st.session_state.batarya):
                 st.session_state.deney_bitti = True
                 st.session_state.deney_basladi = False
 
@@ -351,12 +261,7 @@ with sekme2:
         df_sonuclar = pd.DataFrame(st.session_state.sonuclar)
         st.dataframe(df_sonuclar, use_container_width=True)
         csv_sonuclar = df_sonuclar.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            "📥 Tepki Süresi Sonuçlarını CSV İndir",
-            data=csv_sonuclar,
-            file_name="tepki_suresi_sonuclari.csv",
-            mime="text/csv"
-        )
+        st.download_button("📥 Tepki Süresi Sonuçlarını CSV İndir", data=csv_sonuclar, file_name="tepki_suresi_sonuclari.csv", mime="text/csv")
         if st.button("🔄 Sıfırla ve Yeni Deney Yap"):
             st.session_state.deney_bitti = False
             st.session_state.deney_basladi = False
