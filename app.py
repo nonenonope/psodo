@@ -40,12 +40,12 @@ def hece_uret(unlu_tipi, onceki_son_harf_tipi, ardisik_unsuz_sayisi):
     elif secilen_yapi == "CVC": return random.choice(UNSUZLER) + unlu + random.choice(UNSUZLER)
 
 def kuralli_sozcuk_uret(alt_sinir, ust_sinir):
-    hece_sayisi = random.randint(alt_sinir, ust_sinir)
+    ses_sayisi = random.randint(alt_sinir, ust_sinir)
     unlu_tipi = random.choice(["kalin", "ince"])
     sozcuk = ""
     onceki_son_harf_tipi = ""
     ardisik_unsuz_sayisi = 0
-    for i in range(hece_sayisi):
+    for i in range(ses_sayisi):
         hece = hece_uret(unlu_tipi, onceki_son_harf_tipi, ardisik_unsuz_sayisi)
         if i == 0 and hece.startswith("ğ"):
             hece = hece.replace("ğ", random.choice(["g", "k", "d"]), 1)
@@ -135,126 +135,11 @@ if 'sonuclar' not in st.session_state: st.session_state.sonuclar = []
 if 'baslangic_zamani' not in st.session_state: st.session_state.baslangic_zamani = 0
 if 'secilen_kanal' not in st.session_state: st.session_state.secilen_kanal = "İşitsel"
 
-st.set_page_config(page_title="Yalancı Sözcük ve Sözcüksel Karar Simülatörü", layout="wide")
-st.title("🧠 Klinik Yalancı Sözcük ve Tepki Süresi (TS) Deney Simülatörü")
+st.set_page_config(page_title="Yalancı Sözcük ve Sözcüksel Seçim Simülatörü", layout="wide")
+st.title("🧠 Klinik Yalancı Sözcük ve Tepki Süresi Deney Simülatörü")
 
-sekme1, sekme2 = st.tabs(["⚙️ Uyaran Üreteci & Bürünsel Sentez", "⏱️ Klinik Deney (Sözcüksel Karar Görevi)"])
+sekme1, sekme2 = st.tabs(["⚙️ Uyaran Üreteci & Bürünsel Uyarlama", "⏱️ Klinik Deney (Sözcüksel Seçim)"])
 
 # --- SEKME 1: ÜRETEC ---
 with sekme1:
     st.header("Uyaran Bataryası Üret")
-    col1, col2 = st.columns(2)
-    with col1:
-        sozcuk_sayisi = st.slider("Üretilecek Sözcük Sayısı", 5, 50, 10)
-        alt_sinir = st.slider("Alt Sınır (En Az Hece Sayısı)", 1, 5, 2)
-    with col2:
-        ust_sinir = st.slider("Üst Sınır (En Çok Hece Sayısı)", 1, 5, 3)
-        filtre_uygula = st.checkbox("Alçak Geçiren Akustik Filtre Uygula (400Hz)", value=True)
-
-    if st.button("🚀 Uyaranları Üret"):
-        with st.spinner("Üretiliyor..."):
-            sozcukler = [kuralli_sozcuk_uret(alt_sinir, ust_sinir) for _ in range(sozcuk_sayisi)]
-            tumceler = [jabberwocky_tumcesi_uret(alt_sinir, ust_sinir) for _ in range(3)]
-            
-            st.subheader("🔊 Bürünsel Sentez (Jabberwocky Tümceleri)")
-            for t in tumceler:
-                st.write(f"- {t}")
-                
-            okunacak_metin = ". ".join(tumceler)
-            ses_ciktisi = sesi_sentezle(okunacak_metin, filtre_uygula)
-            st.audio(ses_ciktisi, format="audio/mp3")
-            
-            st.subheader("📋 Tekil Uyaran Listesi")
-            df = pd.DataFrame({"Yalancı Sözcükler": sozcukler})
-            st.dataframe(df, use_container_width=True)
-            csv = df.to_csv(index=False).encode('utf-8')
-            st.download_button("📥 Listeyi CSV Olarak İndir", data=csv, file_name="uyaran_bataryasi.csv", mime="text/csv")
-
-# --- SEKME 2: KLİNİK DENEY ---
-with sekme2:
-    st.header("Sözcüksel Karar Görevi (SKG)")
-    
-    if not st.session_state.deney_basladi and not st.session_state.deney_bitti:
-        st.write("Lütfen deneyi hangi duyusal kanalda sunmak istediğinizi seçin:")
-        
-        sunum_kanali = st.radio("Uyaran Sunum Kanalı:", ["İşitsel", "Görsel"])
-        
-        if st.button("▶️ Deneyi Başlat"):
-            st.session_state.secilen_kanal = sunum_kanali
-            gercekler = random.sample(GERCEK_SOZCUKLER, 5)
-            sahteler = [kuralli_sozcuk_uret(2, 3) for _ in range(5)]
-            batarya = [{"sozcuk": k, "gercek_mi": True} for k in gercekler] + [{"sozcuk": k, "gercek_mi": False} for k in sahteler]
-            random.shuffle(batarya)
-            st.session_state.batarya = batarya
-            st.session_state.deney_basladi = True
-            st.session_state.mevcut_soru = 0
-            st.session_state.sonuclar = []
-            st.rerun()
-
-    elif st.session_state.deney_basladi and not st.session_state.deney_bitti:
-        mevcut_index = st.session_state.mevcut_soru
-        aktif_sozcuk = st.session_state.batarya[mevcut_index]["sozcuk"]
-        st.progress((mevcut_index) / len(st.session_state.batarya))
-        st.subheader(f"Soru {mevcut_index + 1} / {len(st.session_state.batarya)}")
-        
-        # --- FİKSASYON ARTISI ---
-        placeholder = st.empty()
-        placeholder.markdown("<h1 style='text-align: center; font-size: 80px; margin: 40px 0;'>+</h1>", unsafe_allow_html=True)
-        time.sleep(0.5)
-        placeholder.empty()
-        
-        kanal = st.session_state.secilen_kanal
-        
-        if kanal == "İşitsel":
-            ses_dosyasi = sesi_sentezle(aktif_sozcuk, filtre_uygula=False)
-            st.audio(ses_dosyasi, format="audio/mp3", autoplay=True)
-            st.markdown(f"<h1 style='text-align: center; font-size: 60px; margin: 40px 0;'>🔊</h1>", unsafe_allow_html=True)
-            
-        elif kanal == "Görsel":
-            gosterilecek_metin = turkce_buyut(aktif_sozcuk)
-            st.markdown(f"<h1 style='text-align: center; font-size: 60px; margin: 40px 0;'>{gosterilecek_metin}</h1>", unsafe_allow_html=True)
-        
-        if st.session_state.baslangic_zamani == 0:
-            st.session_state.baslangic_zamani = time.time()
-            
-        st.write("---")
-        st.write("### Gelen uyaran gerçek bir Türkçe sözcük mü?")
-        col1, col2 = st.columns(2)
-        
-        def cevabi_kaydet(verilen_cevap):
-            ts = (time.time() - st.session_state.baslangic_zamani) * 1000 # Tepki Süresi (ms)
-            dogru_cevap = st.session_state.batarya[mevcut_index]["gercek_mi"]
-            isabet = (verilen_cevap == dogru_cevap)
-            st.session_state.sonuclar.append({
-                "Sözcük": st.session_state.batarya[mevcut_index]["sozcuk"],
-                "Sözcük Türü": "Gerçek" if dogru_cevap else "Yalancı Sözcük",
-                "Sunum Kanalı": st.session_state.secilen_kanal,
-                "Katılımcı Yanıtı": "Gerçek" if verilen_cevap else "Yalancı Sözcük",
-                "Doğruluk": isabet,
-                "Tepki Süresi (ms)": round(ts, 2)
-            })
-            st.session_state.baslangic_zamani = 0
-            st.session_state.mevcut_soru += 1
-            if st.session_state.mevcut_soru >= len(st.session_state.batarya):
-                st.session_state.deney_bitti = True
-                st.session_state.deney_basladi = False
-
-        with col1:
-            if st.button("✅ GERÇEK SÖZCÜK", use_container_width=True):
-                cevabi_kaydet(True)
-                st.rerun()
-        with col2:
-            if st.button("❌ YALANCI SÖZCÜK", use_container_width=True):
-                cevabi_kaydet(False)
-                st.rerun()
-
-    elif st.session_state.deney_bitti:
-        st.success("🎉 Deney Tamamlandı!")
-        df_sonuclar = pd.DataFrame(st.session_state.sonuclar)
-        st.dataframe(df_sonuclar, use_container_width=True)
-        csv_sonuclar = df_sonuclar.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 Tepki Süresi (TS) Sonuçlarını CSV İndir", data=csv_sonuclar, file_name="tepki_suresi_sonuclari.csv", mime="text/csv")
-        if st.button("🔄 Sıfırla ve Yeni Deney Yap"):
-            st.session_state.deney_bitti = False
-            st.session_state.deney_basladi = False
-            st.rerun()
