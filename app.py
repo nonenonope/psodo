@@ -66,10 +66,25 @@ def morfolojik_ek_getir(sozcuk, ek_tipi):
     son_harf = sozcuk[-1]
     unsuzle_bitiyor = son_harf in UNSUZLER
     sertle_bitiyor = son_harf in SERT_UNSUZLER
-    if ek_tipi == "cogul": return sozcuk + ("lar" if son_unlu in KALIN_UNLULER else "ler")
+    if ek_tipi == "cogul": 
+        return sozcuk + ("lar" if son_unlu in KALIN_UNLULER else "ler")
     elif ek_tipi == "bulunma":
-        ek = "ta" if sertle_bitiyor and son_unlu in KALIN_UNLULER else "te" if sertle_bitiyor and son_unlu in INCE_UNLULER else "da" if son_unlu in KALIN_UNLULER else "de"
+        ek = "ta" if sertle_bitiyor and son_unlu in KALIN_UNLULER else ("te" if sertle_bitiyor and son_unlu in INCE_UNLULER else ("da" if son_unlu in KALIN_UNLULER else "de"))
         return sozcuk + ek
     elif ek_tipi == "belirtme":
         kaynastirma = "" if unsuzle_bitiyor else "y"
-        if son_unlu in ['a', 'ı']: ek = "
+        if son_unlu in ['a', 'ı']: ek = "ı"
+        elif son_unlu in ['e', 'i']: ek = "i"
+        elif son_unlu in ['o', 'u']: ek = "u"
+        else: ek = "ü"
+        return sozcuk + kaynastirma + ek
+    elif ek_tipi == "gecmis_zaman":
+        d_t = "t" if sertle_bitiyor else "d"
+        if son_unlu in ['a', 'ı']: ek = d_t + "ılar"
+        elif son_unlu in ['e', 'i']: ek = d_t + "iler"
+        elif son_unlu in ['o', 'u']: ek = d_t + "ular"
+        else: ek = d_t + "üler"
+        return sozcuk + ek
+    elif ek_tipi == "genis_zaman":
+        if unsuzle_bitiyor:
+            if son_unlu in ['a', '
