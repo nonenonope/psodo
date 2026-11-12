@@ -94,17 +94,4 @@ def morfolojik_ek_getir(sozcuk, ek_tipi):
         return sozcuk + ek
     elif ek_tipi == "bildirme":
         d_t = "t" if sertle_bitiyor else "d"
-        if son_unlu in ['a', 'ı']: ek = d_t + "ır"
-        elif son_unlu in ['e', 'i']: ek = d_t + "ir"
-        elif son_unlu in ['o', 'u']: ek = d_t + "ur"
-        else: ek = d_t + "ür"
-        return sozcuk + ek
-    return sozcuk
-
-def jabberwocky_tumcesi_uret(alt_sinir, ust_sinir):
-    k1 = kuralli_sozcuk_uret(alt_sinir, ust_sinir)
-    k2 = kuralli_sozcuk_uret(alt_sinir, ust_sinir)
-    k3 = kuralli_sozcuk_uret(alt_sinir, ust_sinir)
-    cerceveler = [
-        f"{turkce_buyut(k1[:1]) + turkce_kucult(k1[1:])} çok {k2} bir {morfolojik_ek_getir(k3, 'bildirme')}.",
-        f"{morfolojik_ek_getir(turkce_buyut(k1[:1]) + turkce_kucult(k1[1:]), 'cogul')} {morfolojik_ek_getir(k2, 'bulunma')} {morfolojik_ek_getir(k3, 'genis
+        if son_unlu in ['a', 'ı']: ek = d_
