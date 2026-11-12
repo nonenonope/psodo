@@ -10,14 +10,12 @@ from pydub import AudioSegment
 def turkce_kucult(metin):
     if not isinstance(metin, str):
         return metin
-    s = metin.replace('İ', 'i').replace('I', 'ı')
-    return s.lower()
+    return metin.replace('İ', 'i').replace('I', 'ı').lower()
 
 def turkce_buyut(metin):
     if not isinstance(metin, str):
         return metin
-    s = metin.replace('i', 'İ').replace('ı', 'I')
-    return s.upper()
+    return metin.replace('i', 'İ').replace('ı', 'I').upper()
 
 # --- 1. DİLBİLİMSEL KURALLAR VE SES ENVANTERİ ---
 KALIN_ILK = ['a', 'ı', 'o', 'u']
@@ -44,14 +42,12 @@ OTUMLU_ENGEL = ['b', 'c', 'd', 'g']
 
 SON_OBEKLER = [
     "lk", "lp", "lt", "lç", "nk", "nt", "nç",
-    "rk", "rp", "rt", "rç", "rs", "rş",
-    "st", "şt", "kt", "ft"
+    "rk", "rp", "rt", "rç", "rs", "rş", "st", "şt", "kt", "ft"
 ]
 
 GERCEK_SOZCUKLER = [
-    "masa", "kalem", "defter", "çanta", "kapı",
-    "güneş", "deniz", "kitap", "bardak", "yıldız",
-    "orman", "kedi"
+    "masa", "kalem", "defter", "çanta", "kapı", "güneş",
+    "deniz", "kitap", "bardak", "yıldız", "orman", "kedi"
 ]
 
 def unlu_sec(unlu_tipi, ilk_mi):
@@ -63,29 +59,21 @@ def unlu_sec(unlu_tipi, ilk_mi):
 
 def sonses_sec(son_mi):
     havuz = SON_UNSUZ if son_mi else IC_UNSUZ
-    agirlik = []
-    for u in havuz:
-        agirlik.append(1 if u == 'ğ' else 5)
+    agirlik = [1 if u == 'ğ' else 5 for u in havuz]
     return random.choices(havuz, weights=agirlik)[0]
 
-def onses_sec(ilk_mi, onceki_tip, onceki_son):
-    temel = BAS_UNSUZ if ilk_mi else IC_UNSUZ
-    havuz = []
-    for u in temel:
-        if onceki_tip == "unsuz":
-            if u == 'ğ':
-                continue
-            if onceki_son in OTUMLU_ENGEL:
-                if u in SERT_UNSUZLER:
-                    continue
-            if onceki_son in SERT_UNSUZLER:
-                if u in OTUMLU_ENGEL:
-                    continue
-        havuz.append(u)
+def onses_sec(ilk_mi, onceki_tip, onceki_son_harf):
+    havuz = list(BAS_UNSUZ if ilk_mi else IC_UNSUZ)
+    if onceki_tip == "unsuz":
+        havuz = [u for u in havuz if u != 'ğ']
+        if onceki_son_harf in OTUMLU_ENGEL:
+            havuz = [u for u in havuz if u not in SERT_UNSUZLER]
+        elif onceki_son_harf in SERT_UNSUZLER:
+            havuz = [u for u in havuz if u not in OTUMLU_ENGEL]
     return random.choice(havuz)
 
 def hece_uret(
-    unlu_tipi, onceki_tip, onceki_son,
+    unlu_tipi, onceki_tip, onceki_son_harf,
     unsuz_say, ilk_mi, son_mi, ileri=False
 ):
     unlu = unlu_sec(unlu_tipi, ilk_mi)
@@ -93,10 +81,4 @@ def hece_uret(
     if onceki_tip == "unlu":
         if ileri:
             yapilar = ["CV", "CVC", "CVCC"]
-            w = [50, 38, 12]
-        else:
-            yapilar = ["CV", "CVC"]
-            w = [55, 45]
-    elif unsuz_say >= 2:
-        yapilar = ["VC", "V"]
-        w = [7
+            agirliklar = [50, 38, 12]
