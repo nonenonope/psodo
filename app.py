@@ -239,7 +239,7 @@ st.title("🧠 Klinik Dilbilimsel Yalancı Sözcük ve Tepki Süresi Deneyi")
 
 sekme1, sekme2 = st.tabs([
     "⚙️ Bürünsel Uyarlama Üreteci",
-    "⏱️ Sözcüksel Seçim Deneyi"
+    "⏱️ Sözcüksel Karar Verme Görevi"
 ])
 
 with sekme1:
