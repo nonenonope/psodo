@@ -365,9 +365,9 @@ with sekme1:
         uyaran_tipi = st.radio(
             "Uyaran Tipi:",
             [
-                "Saf Kurallı",
-                "Sözcük Çeldiricili (1 Ses Farklı)",
-                "Karma"
+                "Türkçe Kuralları ((Büyük/Küçük) Ünlü Uyumu, ilk seslem /o, ö/ kısıtlaması, sözcük sonu ünsüz filtresi ve ötümlülük benzeşmesi",
+                "En Küçük Çift",
+                "Karma (Türkçe Kurallarını ve En Küçük Çift özelliğini  %50 – %50 oranlarında bir arada üreten moddur.)"
             ]
         )
         ileri_seslem = st.checkbox(
