@@ -49,98 +49,58 @@ SON_OBEKLER = [
     "rk", "rp", "rt", "rç", "rs", "rş", "st", "şt", "kt", "ft"
 ]
 
-# Temel referans Türkçe sözlükçe (Komşuluk ve Olasılık hesabı için)
-VARSAYILAN_SOZLUKCE = [
-    "masa", "kasa", "yasa", "tasa", "paşa", "maşa", "kalem", "kelam",
-    "defter", "çanta", "kapı", "yapı", "sapı", "tapı", "güneş", "deniz",
-    "beniz", "geniz", "kitap", "hitap", "bardak", "çardak", "yıldız",
-    "orman", "harman", "kedi", "yedi", "dedi", "beli", "deli", "veli",
-    "seli", "teli", "elma", "alma", "armut", "kiraz", "üzüm", "kavun",
-    "karpuz", "ekmek", "yemek", "börek", "çörek", "kürek", "yürek",
-    "çiçek", "böcek", "kepek", "köpek", "bebek", "göbek", "elek",
-    "melek", "yelek", "felek", "çilek", "dilek", "bilek", "okul",
-    "okur", "oyun", "koyun", "boyun", "burun", "fırın", "yarın",
-    "karın", "kalın", "yalın", "balık", "salık", "alık", "açık",
-    "kaşık", "beşik", "eşik", "ışık", "aşık", "bıçak", "uçak",
-    "sıcak", "kucak", "ocak", "bacak", "saçak", "kaçak", "yatak",
-    "batak", "çatak", "ortak", "mutfak", "bardak", "yaprak", "toprak",
-    "bayrak", "kaynak", "parmak", "ırmak", "tırnak", "durak", "kurak",
-    "uzak", "tuzak", "kızak", "kazak", "yüzük", "üzük", "sözlük",
-    "gözlük", "kömür", "ömür", "demir", "emir", "hamur", "çamur",
-    "yağmur", "maymun", "sabun", "odun", "oyuncak", "salıncak",
-    "bilgi", "silgi", "sevgi", "çizgi", "ezgi", "dergi", "vergi",
-    "örgü", "sorgu", "kurgu", "duygu", "kaygı", "saygı", "yaygı",
-    "yolcu", "kolcu", "solcu", "korucu", "kurucu", "sürücü", "binici",
-    "satıcı", "alıcı", "bakıcı", "yakıcı", "yıkıcı", "akıcı", "çekici",
-    "kesici", "delici", "geçici", "seçici", "içici", "açıcı", "saçıcı",
-    "araba", "akraba", "kasaba", "pencere", "tencere", "testere",
-    "kelebek", "örümcek", "karınca", "kaplumbağa", "kurbağa", "balina"
-]
-
+# Taban gerçek sözcük havuzu (Yansıma sözcükler hariç)
 GERCEK_SOZCUKLER = [
     "masa", "kalem", "defter", "çanta", "kapı", "güneş",
-    "deniz", "kitap", "bardak", "yıldız", "orman", "kedi"
+    "deniz", "kitap", "bardak", "yıldız", "orman", "kedi",
+    "elma", "armut", "kiraz", "üzüm", "kavun", "ekmek",
+    "yemek", "çiçek", "böcek", "köpek", "bebek", "çilek",
+    "okul", "oyun", "burun", "balık", "kaşık", "bıçak",
+    "uçak", "yatak", "yaprak", "toprak", "bayrak", "parmak"
 ]
 
-# --- 2. PSİKODİLBİLİMSEL DEĞİŞKEN HESAPLAYICILAR ---
-def levenshtein_bir_mi(s1, s2):
-    uzunluk_farki = abs(len(s1) - len(s2))
-    if uzunluk_farki > 1:
-        return False
-    if s1 == s2:
-        return False
-    if len(s1) == len(s2):
-        fark = sum(1 for a, b in zip(s1, s2) if a != b)
-        return fark == 1
-    if len(s1) > len(s2):
-        s1, s2 = s2, s1
-    i, j, fark = 0, 0, 0
-    while i < len(s1) and j < len(s2):
-        if s1[i] != s2[j]:
-            fark += 1
-            if fark > 1:
-                return False
-            j += 1
+# 1 ses değişiminde gerçek sözcüğe dönüşmeyi engelleyen kontrol listesi
+EK_GERCEK_KONTROL = [
+    "kasa", "yasa", "tasa", "paşa", "maşa", "kelam", "yapı",
+    "sapı", "tapı", "beniz", "geniz", "hitap", "çardak", "harman",
+    "yedi", "dedi", "beli", "deli", "veli", "seli", "teli",
+    "alma", "börek", "çörek", "kürek", "yürek", "kepek", "göbek",
+    "elek", "melek", "yelek", "felek", "dilek", "bilek", "okur",
+    "koyun", "boyun", "fırın", "yarın", "karın", "kalın", "yalın",
+    "salık", "alık", "açık", "beşik", "eşik", "ışık", "aşık",
+    "sıcak", "kucak", "ocak", "bacak", "saçak", "kaçak", "batak",
+    "çatak", "ortak", "mutfak", "ırmak", "tırnak", "durak", "kurak"
+]
+
+BILINEN_GERCEKLER = set(GERCEK_SOZCUKLER + EK_GERCEK_KONTROL)
+
+# --- 2. İÇSEL YAPI METRİKLERİ ---
+def seslem_sayisi_bul(sozcuk):
+    return sum(1 for h in sozcuk if h in TUM_UNLULER)
+
+def seslem_iskeleti_bul(sozcuk):
+    v_idx = [i for i, h in enumerate(sozcuk) if h in TUM_UNLULER]
+    if not v_idx:
+        return ""
+    sinirlar = [0]
+    for k in range(1, len(v_idx)):
+        if v_idx[k] - v_idx[k - 1] == 1:
+            sinirlar.append(v_idx[k])
         else:
-            i += 1
-            j += 1
-    return True
+            sinirlar.append(v_idx[k] - 1)
+    heceler = []
+    for k in range(len(sinirlar)):
+        bas = sinirlar[k]
+        son = sinirlar[k + 1] if k + 1 < len(sinirlar) else len(sozcuk)
+        parca = sozcuk[bas:son]
+        iskelet = "".join("V" if h in TUM_UNLULER else "C" for h in parca)
+        heceler.append(iskelet)
+    return ".".join(heceler)
 
-def komsu_analizi(sozcuk, sozlukce):
-    komsular = [w for w in sozlukce if levenshtein_bir_mi(sozcuk, w)]
-    komsular = sorted(list(set(komsular)))
-    return len(komsular), ", ".join(komsular[:5]) if komsular else "-"
-
-def bigram_tablosu_olustur(sozlukce):
-    sayac = {}
-    toplam = 0
-    for w in sozlukce:
-        temiz = f"^{turkce_kucult(w)}$"
-        for i in range(len(temiz) - 1):
-            ikili = temiz[i:i+2]
-            sayac[ikili] = sayac.get(ikili, 0) + 1
-            toplam += 1
-    if toplam == 0:
-        return {}
-    return {k: v / toplam for k, v in sayac.items()}
-
-def sesdizimsel_olasilik(sozcuk, bigram_olasiliklari):
-    temiz = f"^{turkce_kucult(sozcuk)}$"
-    if len(temiz) < 2 or not bigram_olasiliklari:
-        return 0.0, "Düşük"
-    skorlar = []
-    for i in range(len(temiz) - 1):
-        ikili = temiz[i:i+2]
-        skorlar.append(bigram_olasiliklari.get(ikili, 0.0))
-    ort = sum(skorlar) / len(skorlar)
-    yuzde_skor = round(ort * 100, 3)
-    if yuzde_skor >= 1.2:
-        duzey = "Yüksek"
-    elif yuzde_skor >= 0.5:
-        duzey = "Orta"
-    else:
-        duzey = "Düşük"
-    return yuzde_skor, duzey
+def seslem_agirligi_bul(iskelet):
+    parcalar = iskelet.split(".")
+    agir_var = any(p.endswith("C") for p in parcalar if p)
+    return "Ağır (Kapalı Seslem)" if agir_var else "Hafif (Açık Seslem)"
 
 # --- 3. SESDİZİMSEL ÜRETİM MOTORU ---
 def unlu_sec(unlu_tipi, ilk_mi):
@@ -239,6 +199,69 @@ def kuralli_sozcuk_uret(alt_sinir, ust_sinir, ileri=False):
 
     return sozcuk
 
+def celdirici_sozcuk_uret(alt_sinir, ust_sinir):
+    alt = min(alt_sinir, ust_sinir)
+    ust = max(alt_sinir, ust_sinir)
+    uygun_tabanlar = [
+        w for w in GERCEK_SOZCUKLER
+        if alt <= seslem_sayisi_bul(w) <= ust
+    ]
+    if not uygun_tabanlar:
+        uygun_tabanlar = list(GERCEK_SOZCUKLER)
+
+    for _ in range(60):
+        taban = random.choice(uygun_tabanlar)
+        idx = random.randint(0, len(taban) - 1)
+        mevcut = taban[idx]
+
+        if mevcut in TUM_UNLULER:
+            ilk_mi = not any(h in TUM_UNLULER for h in taban[:idx])
+            if mevcut in KALIN_ILK:
+                havuz = KALIN_ILK if ilk_mi else KALIN_DIGER
+            else:
+                havuz = INCE_ILK if ilk_mi else INCE_DIGER
+            aday_harfler = [h for h in havuz if h != mevcut]
+        else:
+            if idx == 0:
+                havuz = list(BAS_UNSUZ)
+            elif idx == len(taban) - 1:
+                havuz = list(SON_UNSUZ)
+            else:
+                havuz = list(IC_UNSUZ)
+
+            aday_harfler = [h for h in havuz if h != mevcut]
+            if idx > 0 and taban[idx - 1] not in TUM_UNLULER:
+                aday_harfler = [h for h in aday_harfler if h != 'ğ']
+                sol = taban[idx - 1]
+                if sol in OTUMLU_ENGEL:
+                    aday_harfler = [
+                        h for h in aday_harfler if h not in SERT_UNSUZLER
+                    ]
+                elif sol in SERT_UNSUZLER:
+                    aday_harfler = [
+                        h for h in aday_harfler if h not in OTUMLU_ENGEL
+                    ]
+            if idx + 1 < len(taban) and taban[idx + 1] not in TUM_UNLULER:
+                sag = taban[idx + 1]
+                if sag in OTUMLU_ENGEL:
+                    aday_harfler = [
+                        h for h in aday_harfler if h not in SERT_UNSUZLER
+                    ]
+                elif sag in SERT_UNSUZLER:
+                    aday_harfler = [
+                        h for h in aday_harfler if h not in OTUMLU_ENGEL
+                    ]
+
+        if not aday_harfler:
+            continue
+        yeni_harf = random.choice(aday_harfler)
+        aday = taban[:idx] + yeni_harf + taban[idx + 1:]
+        if aday not in BILINEN_GERCEKLER:
+            return aday, taban
+
+    yedek = kuralli_sozcuk_uret(alt_sinir, ust_sinir, False)
+    return yedek, "-"
+
 def morfolojik_ek_getir(sozcuk, ek_tipi):
     son_unlu = [h for h in sozcuk if h in TUM_UNLULER][-1]
     son_harf = sozcuk[-1]
@@ -326,33 +349,9 @@ for anahtar, varsayilan in [
 
 st.title("🧠 Klinik Dilbilimsel Yalancı Sözcük ve Tepki Süresi Deneyi")
 
-# Yan panel: Referans sözlükçe yükleme
-with st.sidebar:
-    st.header("📚 Referans Sözlükçe")
-    st.caption(
-        "Komşuluk yoğunluğu (N) ve sesdizimsel olasılık hesabı "
-        "için Türkçe sözlükçe listesi kullanılır."
-    )
-    yuklenen_dosya = st.file_uploader(
-        "Özel Sözlükçe Yükle (.txt veya .csv)",
-        type=["txt", "csv"]
-    )
-    aktif_sozlukce = list(VARSAYILAN_SOZLUKCE)
-    if yuklenen_dosya is not None:
-        icerik = yuklenen_dosya.getvalue().decode("utf-8", errors="ignore")
-        ek_sozcukler = [
-            turkce_kucult(s.strip().split(",")[0])
-            for s in icerik.splitlines()
-            if s.strip()
-        ]
-        aktif_sozlukce = list(set(aktif_sozlukce + ek_sozcukler))
-    st.info(f"Aktif Sözlükçe Hacmi: {len(aktif_sozlukce)} sözcük")
-
-bigram_tablosu = bigram_tablosu_olustur(aktif_sozlukce)
-
 sekme1, sekme2 = st.tabs([
     "⚙️ Bürünsel Uyarlama Üreteci",
-    "⏱️ Sözcüksel Karar Deneyi"
+    "⏱️ Sözcüksel Seçim Deneyi"
 ])
 
 with sekme1:
@@ -361,8 +360,16 @@ with sekme1:
     with col1:
         sozcuk_sayisi = st.slider("Üretilecek Sözcük Sayısı", 5, 50, 10)
         alt_sinir = st.slider("Alt Sınır (En Az Ses Sayısı)", 1, 5, 2)
-    with col2:
         ust_sinir = st.slider("Üst Sınır (En Çok Ses Sayısı)", 1, 5, 3)
+    with col2:
+        uyaran_tipi = st.radio(
+            "Uyaran Tipi:",
+            [
+                "Saf Kurallı",
+                "Sözcük Çeldiricili (1 Ses Farklı)",
+                "Karma"
+            ]
+        )
         ileri_seslem = st.checkbox(
             "İleri Seslem Örüntülerini Dahil Et (VCC ve CVCC)",
             value=False
@@ -373,11 +380,48 @@ with sekme1:
         )
 
     if st.button("🚀 Uyaranları Üret"):
-        with st.spinner("Üretiliyor ve psikodilbilimsel değerler hesaplanıyor..."):
-            sozcukler = [
-                kuralli_sozcuk_uret(alt_sinir, ust_sinir, ileri_seslem)
-                for _ in range(sozcuk_sayisi)
-            ]
+        with st.spinner("Üretiliyor..."):
+            uretilen_kayitlar = []
+            for i in range(sozcuk_sayisi):
+                if uyaran_tipi == "Saf Kurallı":
+                    sozcuk = kuralli_sozcuk_uret(
+                        alt_sinir, ust_sinir, ileri_seslem
+                    )
+                    kaynak_tip = "Saf Kurallı"
+                    taban_sozcuk = "-"
+                elif uyaran_tipi == "Sözcük Çeldiricili (1 Ses Farklı)":
+                    sozcuk, taban_sozcuk = celdirici_sozcuk_uret(
+                        alt_sinir, ust_sinir
+                    )
+                    kaynak_tip = "Sözcük Çeldiricili"
+                else:
+                    if i % 2 == 0:
+                        sozcuk = kuralli_sozcuk_uret(
+                            alt_sinir, ust_sinir, ileri_seslem
+                        )
+                        kaynak_tip = "Saf Kurallı"
+                        taban_sozcuk = "-"
+                    else:
+                        sozcuk, taban_sozcuk = celdirici_sozcuk_uret(
+                            alt_sinir, ust_sinir
+                        )
+                        kaynak_tip = "Sözcük Çeldiricili"
+
+                iskelet = seslem_iskeleti_bul(sozcuk)
+                agirlik = seslem_agirligi_bul(iskelet)
+                uretilen_kayitlar.append({
+                    "Yalancı Sözcük": sozcuk,
+                    "Üretim Tipi": kaynak_tip,
+                    "Taban Sözcük": taban_sozcuk,
+                    "Harf Sayısı": len(sozcuk),
+                    "Seslem Sayısı": seslem_sayisi_bul(sozcuk),
+                    "Seslem İskeleti": iskelet,
+                    "Seslem Ağırlığı": agirlik
+                })
+
+            if uyaran_tipi == "Karma":
+                random.shuffle(uretilen_kayitlar)
+
             tumceler = [
                 jabberwocky_tumcesi_uret(alt_sinir, ust_sinir, ileri_seslem)
                 for _ in range(3)
@@ -390,34 +434,19 @@ with sekme1:
             ses_ciktisi = sesi_sentezle(". ".join(tumceler), filtre_uygula)
             st.audio(ses_ciktisi, format="audio/mp3")
 
-            st.subheader("📋 Tekil Uyaran Listesi ve Psikodilbilimsel Değişkenler")
-            satirlar = []
-            for s in sozcukler:
-                komsu_say, komsu_ornek = komsu_analizi(s, aktif_sozlukce)
-                olasilik_skor, olasilik_duzey = sesdizimsel_olasilik(
-                    s, bigram_tablosu
-                )
-                satirlar.append({
-                    "Yalancı Sözcük": s,
-                    "Harf Uzunluğu": len(s),
-                    "Komşuluk Yoğunluğu (N)": komsu_say,
-                    "Komşu Sözcükler": komsu_ornek,
-                    "Sesdizimsel Olasılık (%)": olasilik_skor,
-                    "Olasılık Düzeyi": olasilik_duzey
-                })
-
-            df = pd.DataFrame(satirlar)
+            st.subheader("📋 Tekil Uyaran Listesi ve İçsel Yapı Metrikleri")
+            df = pd.DataFrame(uretilen_kayitlar)
             st.dataframe(df, use_container_width=True)
             csv = df.to_csv(index=False).encode('utf-8')
             st.download_button(
-                "📥 Kontrol Değişkenli Listeyi CSV Olarak İndir",
+                "📥 Listeyi CSV Olarak İndir",
                 data=csv,
                 file_name="uyaran_bataryasi.csv",
                 mime="text/csv"
             )
 
 with sekme2:
-    st.header("Sözcüksel Seçim Deneyi")
+    st.header("Sözcüksel Karar Deneyi")
 
     if not st.session_state.deney_basladi and not st.session_state.deney_bitti:
         st.write("Lütfen deneyi hangi duyusal kanaldan almak istediğinizi seçin:")
@@ -425,11 +454,39 @@ with sekme2:
 
         if st.button("▶️ Deneyi Başlat"):
             st.session_state.secilen_kanal = sunum_kanali
-            gercekler = random.sample(GERCEK_SOZCUKLER, 5)
-            sahteler = [kuralli_sozcuk_uret(2, 3, False) for _ in range(5)]
+            gercekler = random.sample(GERCEK_SOZCUKLER, 6)
+            saf_sahteler = [
+                kuralli_sozcuk_uret(2, 3, False) for _ in range(3)
+            ]
+            celdirici_sahteler = [
+                celdirici_sozcuk_uret(2, 3) for _ in range(3)
+            ]
+
             batarya = (
-                [{"sozcuk": k, "gercek_mi": True} for k in gercekler]
-                + [{"sozcuk": k, "gercek_mi": False} for k in sahteler]
+                [
+                    {
+                        "sozcuk": k,
+                        "gercek_mi": True,
+                        "alt_tip": "Gerçek Sözcük"
+                    }
+                    for k in gercekler
+                ]
+                + [
+                    {
+                        "sozcuk": k,
+                        "gercek_mi": False,
+                        "alt_tip": "Saf Kurallı"
+                    }
+                    for k in saf_sahteler
+                ]
+                + [
+                    {
+                        "sozcuk": k,
+                        "gercek_mi": False,
+                        "alt_tip": f"Çeldiricili ({taban})"
+                    }
+                    for k, taban in celdirici_sahteler
+                ]
             )
             random.shuffle(batarya)
             st.session_state.batarya = batarya
@@ -478,14 +535,17 @@ with sekme2:
 
         def cevabi_kaydet(verilen_cevap):
             ts = (time.time() - st.session_state.baslangic_zamani) * 1000
-            dogru = st.session_state.batarya[idx]["gercek_mi"]
-            komsu_say, _ = komsu_analizi(aktif, aktif_sozlukce)
-            olasilik_skor, _ = sesdizimsel_olasilik(aktif, bigram_tablosu)
+            og = st.session_state.batarya[idx]
+            dogru = og["gercek_mi"]
+            iskelet = seslem_iskeleti_bul(aktif)
             st.session_state.sonuclar.append({
                 "Sözcük": aktif,
                 "Sözcük Türü": "Gerçek" if dogru else "Yalancı Sözcük",
-                "Komşuluk Yoğunluğu (N)": komsu_say,
-                "Sesdizimsel Olasılık (%)": olasilik_skor,
+                "Uyaran Alt Tipi": og["alt_tip"],
+                "Harf Sayısı": len(aktif),
+                "Seslem Sayısı": seslem_sayisi_bul(aktif),
+                "Seslem İskeleti": iskelet,
+                "Seslem Ağırlığı": seslem_agirligi_bul(iskelet),
                 "Sunum Kanalı": st.session_state.secilen_kanal,
                 "Katılımcı Yanıtı": (
                     "Gerçek" if verilen_cevap else "Yalancı Sözcük"
