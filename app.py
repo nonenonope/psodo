@@ -74,7 +74,33 @@ EK_GERCEK_KONTROL = [
 
 BILINEN_GERCEKLER = set(GERCEK_SOZCUKLER + EK_GERCEK_KONTROL)
 
-# --- 2. İÇSEL YAPI METRİKLERİ ---
+# --- 2. İÇSEL YAPI VE SESDİZİMSEL OLASILIK HESAPLAYICILAR ---
+def bigram_tablosu_olustur(sozlukce):
+    sayac = {}
+    toplam = 0
+    for w in sozlukce:
+        temiz = f"^{turkce_kucult(w)}$"
+        for i in range(len(temiz) - 1):
+            ikili = temiz[i:i + 2]
+            sayac[ikili] = sayac.get(ikili, 0) + 1
+            toplam += 1
+    if toplam == 0:
+        return {}
+    return {k: v / toplam for k, v in sayac.items()}
+
+BIGRAM_TABLOSU = bigram_tablosu_olustur(BILINEN_GERCEKLER)
+
+def sesdizimsel_olasilik_bul(sozcuk):
+    temiz = f"^{turkce_kucult(sozcuk)}$"
+    if len(temiz) < 2 or not BIGRAM_TABLOSU:
+        return 0.0
+    skorlar = [
+        BIGRAM_TABLOSU.get(temiz[i:i + 2], 0.0)
+        for i in range(len(temiz) - 1)
+    ]
+    ort = sum(skorlar) / len(skorlar)
+    return round(ort * 100, 3)
+
 def seslem_sayisi_bul(sozcuk):
     return sum(1 for h in sozcuk if h in TUM_UNLULER)
 
@@ -351,7 +377,7 @@ st.title("🧠 Klinik Dilbilimsel Yalancı Sözcük ve Tepki Süresi Deneyi")
 
 sekme1, sekme2 = st.tabs([
     "⚙️ Bürünsel Uyarlama Üreteci",
-    "⏱️ Sözcüksel Seçim Deneyi"
+    "⏱️ Sözcüksel Karar Deneyi"
 ])
 
 with sekme1:
@@ -409,6 +435,7 @@ with sekme1:
 
                 iskelet = seslem_iskeleti_bul(sozcuk)
                 agirlik = seslem_agirligi_bul(iskelet)
+                olasilik = sesdizimsel_olasilik_bul(sozcuk)
                 uretilen_kayitlar.append({
                     "Yalancı Sözcük": sozcuk,
                     "Üretim Tipi": kaynak_tip,
@@ -416,7 +443,8 @@ with sekme1:
                     "Harf Sayısı": len(sozcuk),
                     "Seslem Sayısı": seslem_sayisi_bul(sozcuk),
                     "Seslem İskeleti": iskelet,
-                    "Seslem Ağırlığı": agirlik
+                    "Seslem Ağırlığı": agirlik,
+                    "Sesdizimsel Olasılık (%)": olasilik
                 })
 
             if uyaran_tipi == "Karma":
@@ -446,7 +474,7 @@ with sekme1:
             )
 
 with sekme2:
-    st.header("Sözcüksel Karar Deneyi")
+    st.header("Sözcüksel Seçim Deneyi")
 
     if not st.session_state.deney_basladi and not st.session_state.deney_bitti:
         st.write("Lütfen deneyi hangi duyusal kanaldan almak istediğinizi seçin:")
@@ -546,6 +574,7 @@ with sekme2:
                 "Seslem Sayısı": seslem_sayisi_bul(aktif),
                 "Seslem İskeleti": iskelet,
                 "Seslem Ağırlığı": seslem_agirligi_bul(iskelet),
+                "Sesdizimsel Olasılık (%)": sesdizimsel_olasilik_bul(aktif),
                 "Sunum Kanalı": st.session_state.secilen_kanal,
                 "Katılımcı Yanıtı": (
                     "Gerçek" if verilen_cevap else "Yalancı Sözcük"
