@@ -391,7 +391,7 @@ with sekme1:
         uyaran_tipi = st.radio(
             "Uyaran Tipi:",
             [
-                "Türkçe Kuralları ((Büyük/Küçük) Ünlü Uyumu, İlk seslem için /o, ö/ kısıtlaması, sözcük sonu ünsüz filtresi ve ötümlülük benzeşmesi",
+                "Türkçe Kuralları (Büyük/Küçük) Ünlü Uyumu, İlk seslem için /o, ö/ kısıtlaması, sözcük sonu ünsüz filtresi ve ötümlülük benzeşmesi",
                 "En Küçük Çift",
                 "Karma (Türkçe Kurallarını ve En Küçük Çift özelliğini  %50 – %50 oranlarında bir arada üreten moddur.)"
             ]
