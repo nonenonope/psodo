@@ -21,6 +21,11 @@ def turkce_buyut(metin):
         return metin
     return metin.replace('i', 'İ').replace('ı', 'I').upper()
 
+def bas_harf_buyut(metin):
+    if not metin:
+        return metin
+    return turkce_buyut(metin[:1]) + turkce_kucult(metin[1:])
+
 # --- 1. DİLBİLİMSEL KURALLAR VE SES ENVANTERİ ---
 KALIN_ILK = ['a', 'ı', 'o', 'u']
 KALIN_DIGER = ['a', 'ı', 'u']
@@ -100,10 +105,12 @@ def sesdizimsel_olasilik_bul(sozcuk):
     return round(ort * 100, 3)
 
 def seslem_sayisi_bul(sozcuk):
-    return sum(1 for h in sozcuk if h in TUM_UNLULER)
+    kucuk = turkce_kucult(sozcuk)
+    return sum(1 for h in kucuk if h in TUM_UNLULER)
 
 def seslem_iskeleti_bul(sozcuk):
-    v_idx = [i for i, h in enumerate(sozcuk) if h in TUM_UNLULER]
+    kucuk = turkce_kucult(sozcuk)
+    v_idx = [i for i, h in enumerate(kucuk) if h in TUM_UNLULER]
     if not v_idx:
         return ""
     sinirlar = [0]
@@ -115,8 +122,8 @@ def seslem_iskeleti_bul(sozcuk):
     heceler = []
     for k in range(len(sinirlar)):
         bas = sinirlar[k]
-        son = sinirlar[k + 1] if k + 1 < len(sinirlar) else len(sozcuk)
-        parca = sozcuk[bas:son]
+        son = sinirlar[k + 1] if k + 1 < len(sinirlar) else len(kucuk)
+        parca = kucuk[bas:son]
         iskelet = "".join(
             "Ünlü" if h in TUM_UNLULER else "Ünsüz" for h in parca
         )
@@ -289,8 +296,12 @@ def celdirici_sozcuk_uret(alt_sinir, ust_sinir):
     return yedek, "-"
 
 def morfolojik_ek_getir(sozcuk, ek_tipi):
-    son_unlu = [h for h in sozcuk if h in TUM_UNLULER][-1]
-    son_harf = sozcuk[-1]
+    kucuk = turkce_kucult(sozcuk)
+    unluler = [h for h in kucuk if h in TUM_UNLULER]
+    if not unluler:
+        return sozcuk
+    son_unlu = unluler[-1]
+    son_harf = kucuk[-1]
     unsuz_son = son_harf in TUM_UNSUZLER
     sert_son = son_harf in SERT_UNSUZLER
     kalin = son_unlu in KALIN_ILK
@@ -335,14 +346,18 @@ def jabberwocky_tumcesi_uret(alt_sinir, ust_sinir, ileri=False):
     k2 = kuralli_sozcuk_uret(alt_sinir, ust_sinir, ileri)
     k3 = kuralli_sozcuk_uret(alt_sinir, ust_sinir, ileri)
 
-    c1 = turkce_buyut(k1[:1]) + turkce_kucult(k1[1:])
+    c1 = bas_harf_buyut(k1)
+    k1_cog = bas_harf_buyut(morfolojik_ek_getir(k1, 'cogul'))
+    k2_bul = morfolojik_ek_getir(k2, 'bulunma')
+    k2_bel = morfolojik_ek_getir(k2, 'belirtme')
+    k3_bil = morfolojik_ek_getir(k3, 'bildirme')
+    k3_gen = morfolojik_ek_getir(k3, 'genis_zaman')
+    k3_gec = morfolojik_ek_getir(k3, 'gecmis_zaman')
+
     cerceveler = [
-        f"{c1} çok {k2} bir {morfolojik_ek_getir(k3, 'bildirme')}.",
-        f"{morfolojik_ek_getir(c1, 'cogul')} "
-        f"{morfolojik_ek_getir(k2, 'bulunma')} "
-        f"{morfolojik_ek_getir(k3, 'genis_zaman')}.",
-        f"{c1} {morfolojik_ek_getir(k2, 'belirtme')} "
-        f"{morfolojik_ek_getir(k3, 'gecmis_zaman')}."
+        f"{c1} çok {k2} bir {k3_bil}.",
+        f"{k1_cog} {k2_bul} {k3_gen}.",
+        f"{c1} {k2_bel} {k3_gec}."
     ]
     return random.choice(cerceveler)
 
@@ -397,7 +412,7 @@ with sekme1:
             ]
         )
         ileri_seslem = st.checkbox(
-            "İleri Seslem Örüntülerini Dahil Et (ÜnlüÜnsüzÜnsüz ve ÜnsüzÜnlüÜnsüzÜnsüz)",
+            "İleri Seslem Örüntülerini Dahil Et (VCC ve CVCC)",
             value=False
         )
         filtre_uygula = st.checkbox(
@@ -467,7 +482,7 @@ with sekme1:
             )
 
 with sekme2:
-    st.header("Sözcüksel Seçim Deneyi")
+    st.header("Sözcüksel Karar Deneyi")
 
     if not st.session_state.deney_basladi and not st.session_state.deney_bitti:
         st.write("Lütfen deneyi hangi duyusal kanaldan almak istediğinizi seçin:")
