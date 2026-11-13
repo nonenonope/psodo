@@ -412,7 +412,7 @@ with sekme1:
             ]
         )
         ileri_seslem = st.checkbox(
-            "İleri Seslem Örüntülerini Dahil Et (VCC ve CVCC)",
+            "İleri Seslem Örüntülerini Dahil Et (ÜnlüÜnsüzÜnsüz ve ÜnsüzÜnlüÜnsüzÜnsüz)",
             value=False
         )
         filtre_uygula = st.checkbox(
