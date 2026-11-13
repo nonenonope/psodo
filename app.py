@@ -7,7 +7,7 @@ from gtts import gTTS
 from pydub import AudioSegment
 
 st.set_page_config(
-    page_title="Türkçe Yalancı Sözcükler ve Sözcüksel Karar Verme Görevi ",
+    page_title="Türkçe Yalancı Sözcükler ve Sözcüksel Karar Görevi ",
     layout="wide"
 )
 
@@ -239,7 +239,7 @@ st.title("🧠 Klinik Dilbilimsel Yalancı Sözcük ve Tepki Süresi Deneyi")
 
 sekme1, sekme2 = st.tabs([
     "⚙️ Bürünsel Uyarlama Üreteci",
-    "⏱️ Sözcüksel Karar Verme Görevi"
+    "⏱️ Sözcüksel Karar Görevi"
 ])
 
 with sekme1:
