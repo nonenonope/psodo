@@ -49,7 +49,6 @@ SON_OBEKLER = [
     "rk", "rp", "rt", "rç", "rs", "rş", "st", "şt", "kt", "ft"
 ]
 
-# Taban gerçek sözcük havuzu (Yansıma sözcükler hariç)
 GERCEK_SOZCUKLER = [
     "masa", "kalem", "defter", "çanta", "kapı", "güneş",
     "deniz", "kitap", "bardak", "yıldız", "orman", "kedi",
@@ -59,7 +58,6 @@ GERCEK_SOZCUKLER = [
     "uçak", "yatak", "yaprak", "toprak", "bayrak", "parmak"
 ]
 
-# 1 ses değişiminde gerçek sözcüğe dönüşmeyi engelleyen kontrol listesi
 EK_GERCEK_KONTROL = [
     "kasa", "yasa", "tasa", "paşa", "maşa", "kelam", "yapı",
     "sapı", "tapı", "beniz", "geniz", "hitap", "çardak", "harman",
@@ -119,13 +117,15 @@ def seslem_iskeleti_bul(sozcuk):
         bas = sinirlar[k]
         son = sinirlar[k + 1] if k + 1 < len(sinirlar) else len(sozcuk)
         parca = sozcuk[bas:son]
-        iskelet = "".join("V" if h in TUM_UNLULER else "C" for h in parca)
+        iskelet = "".join(
+            "Ünlü" if h in TUM_UNLULER else "Ünsüz" for h in parca
+        )
         heceler.append(iskelet)
     return ".".join(heceler)
 
 def seslem_agirligi_bul(iskelet):
     parcalar = iskelet.split(".")
-    agir_var = any(p.endswith("C") for p in parcalar if p)
+    agir_var = any(p.endswith("Ünsüz") for p in parcalar if p)
     return "Ağır (Kapalı Seslem)" if agir_var else "Hafif (Açık Seslem)"
 
 # --- 3. SESDİZİMSEL ÜRETİM MOTORU ---
@@ -413,35 +413,28 @@ with sekme1:
                     sozcuk = kuralli_sozcuk_uret(
                         alt_sinir, ust_sinir, ileri_seslem
                     )
-                    kaynak_tip = "Saf Kurallı"
                     taban_sozcuk = "-"
                 elif uyaran_tipi == "Sözcük Çeldiricili (1 Ses Farklı)":
                     sozcuk, taban_sozcuk = celdirici_sozcuk_uret(
                         alt_sinir, ust_sinir
                     )
-                    kaynak_tip = "Sözcük Çeldiricili"
                 else:
                     if i % 2 == 0:
                         sozcuk = kuralli_sozcuk_uret(
                             alt_sinir, ust_sinir, ileri_seslem
                         )
-                        kaynak_tip = "Saf Kurallı"
                         taban_sozcuk = "-"
                     else:
                         sozcuk, taban_sozcuk = celdirici_sozcuk_uret(
                             alt_sinir, ust_sinir
                         )
-                        kaynak_tip = "Sözcük Çeldiricili"
 
                 iskelet = seslem_iskeleti_bul(sozcuk)
                 agirlik = seslem_agirligi_bul(iskelet)
                 olasilik = sesdizimsel_olasilik_bul(sozcuk)
                 uretilen_kayitlar.append({
                     "Yalancı Sözcük": sozcuk,
-                    "Üretim Tipi": kaynak_tip,
                     "Taban Sözcük": taban_sozcuk,
-                    "Harf Sayısı": len(sozcuk),
-                    "Seslem Sayısı": seslem_sayisi_bul(sozcuk),
                     "Seslem İskeleti": iskelet,
                     "Seslem Ağırlığı": agirlik,
                     "Sesdizimsel Olasılık (%)": olasilik
@@ -495,7 +488,7 @@ with sekme2:
                     {
                         "sozcuk": k,
                         "gercek_mi": True,
-                        "alt_tip": "Gerçek Sözcük"
+                        "taban": "-"
                     }
                     for k in gercekler
                 ]
@@ -503,7 +496,7 @@ with sekme2:
                     {
                         "sozcuk": k,
                         "gercek_mi": False,
-                        "alt_tip": "Saf Kurallı"
+                        "taban": "-"
                     }
                     for k in saf_sahteler
                 ]
@@ -511,7 +504,7 @@ with sekme2:
                     {
                         "sozcuk": k,
                         "gercek_mi": False,
-                        "alt_tip": f"Çeldiricili ({taban})"
+                        "taban": taban
                     }
                     for k, taban in celdirici_sahteler
                 ]
@@ -569,9 +562,7 @@ with sekme2:
             st.session_state.sonuclar.append({
                 "Sözcük": aktif,
                 "Sözcük Türü": "Gerçek" if dogru else "Yalancı Sözcük",
-                "Uyaran Alt Tipi": og["alt_tip"],
-                "Harf Sayısı": len(aktif),
-                "Seslem Sayısı": seslem_sayisi_bul(aktif),
+                "Taban Sözcük": og["taban"],
                 "Seslem İskeleti": iskelet,
                 "Seslem Ağırlığı": seslem_agirligi_bul(iskelet),
                 "Sesdizimsel Olasılık (%)": sesdizimsel_olasilik_bul(aktif),
