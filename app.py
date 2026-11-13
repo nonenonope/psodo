@@ -7,7 +7,7 @@ from gtts import gTTS
 from pydub import AudioSegment
 
 st.set_page_config(
-    page_title="Yalancı Sözcük ve Sözcüksel Seçim Deneyi",
+    page_title="Türkçe Yalancı Sözcükler ve Sözcüksel Karar Verme Görevi ",
     layout="wide"
 )
 
